@@ -1,2 +1,1 @@
-# agentic-media-www
-Apex marketing site at agenticmedia.cc — beta-invite capture for commons.
+Apex marketing site for agenticmedia.cc — see task #62
