@@ -1,0 +1,385 @@
+/* ──────────────────────────────────────────────────────────────────
+   @agentic-media/agent-ui — components v0.1
+
+   Three component groups, three token-driven classes per group, all
+   compatible with both consumers' existing markup:
+
+   1. .am-btn      — buttons (replaces commons-app .am-button + dashboard .btn)
+   2. .am-tabs     — tabs (replaces dashboard .tab-bar / .tab-link)
+   3. .am-icon     — inline-SVG icon helper (used with /icons/<name>.svg)
+
+   Legacy class names from commons-app (.btn-primary, .btn-secondary)
+   and dashboard (.btn, .btn.primary, .btn.danger, .tab-link.active)
+   are aliased at the bottom of this file so consumers can adopt
+   incrementally.
+   ────────────────────────────────────────────────────────────── */
+
+/* ──────────────────────────────────────────────────────────────────
+   1. Buttons — .am-btn
+   ────────────────────────────────────────────────────────────── */
+
+.am-btn {
+  /* base */
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--am-s-2);
+  height: var(--am-btn-h-md);
+  padding: 0 var(--am-btn-px-md);
+  border-radius: var(--am-btn-radius);
+  border: 1px solid transparent;
+  background: transparent;
+
+  font-family: var(--am-font-display);
+  font-size: var(--am-btn-fz-md);
+  font-weight: var(--am-fw-ui);
+  letter-spacing: 0.01em;
+  line-height: 1;
+  white-space: nowrap;
+  text-decoration: none;
+
+  cursor: pointer;
+  user-select: none;
+  -webkit-tap-highlight-color: transparent;
+
+  transition:
+    background var(--am-dur-fast) var(--am-ease),
+    border-color var(--am-dur-fast) var(--am-ease),
+    color var(--am-dur-fast) var(--am-ease),
+    transform var(--am-dur-fast) var(--am-ease);
+
+  color: var(--am-text-2);
+}
+.am-btn:focus-visible {
+  outline: 2px solid var(--am-accent);
+  outline-offset: 2px;
+}
+.am-btn:active { transform: translateY(1px); }
+.am-btn[disabled],
+.am-btn[aria-disabled="true"] {
+  opacity: 0.45;
+  cursor: not-allowed;
+  pointer-events: none;
+}
+
+/* sizes */
+.am-btn--sm { height: var(--am-btn-h-sm); padding: 0 var(--am-btn-px-sm); font-size: var(--am-btn-fz-sm); }
+.am-btn--lg { height: var(--am-btn-h-lg); padding: 0 var(--am-btn-px-lg); font-size: var(--am-btn-fz-lg); }
+
+/* PRIMARY — mint, used for the single most-important action per surface */
+.am-btn--primary {
+  background: var(--am-accent);
+  color: var(--am-base);
+  border-color: var(--am-accent);
+}
+.am-btn--primary:hover { background: var(--am-accent-2); border-color: var(--am-accent-2); color: var(--am-base); }
+.am-btn--primary:active { background: var(--am-accent-d); border-color: var(--am-accent-d); }
+
+/* SECONDARY — outlined, for "alternate" actions (most common dashboard button) */
+.am-btn--secondary {
+  background: transparent;
+  color: var(--am-text-2);
+  border-color: var(--am-border);
+}
+.am-btn--secondary:hover { color: var(--am-text); border-color: var(--am-border-3); background: var(--am-surface); }
+.am-btn--secondary:active { background: var(--am-surface-2); }
+
+/* SOLID — filled neutral, sits on dark surfaces; used in modals / sticky bars */
+.am-btn--solid {
+  background: var(--am-surface);
+  color: var(--am-text);
+  border-color: var(--am-border);
+}
+.am-btn--solid:hover { background: var(--am-surface-2); border-color: var(--am-border-3); }
+.am-btn--solid:active { background: var(--am-surface-3); }
+
+/* GHOST — chromeless until hover; for dense toolbars + table-row actions */
+.am-btn--ghost {
+  background: transparent;
+  color: var(--am-muted);
+  border-color: transparent;
+}
+.am-btn--ghost:hover { color: var(--am-text); background: var(--am-surface); }
+.am-btn--ghost:active { background: var(--am-surface-2); }
+
+/* IRIS — brand purple; reserved for marketing surfaces + the "discuss with overlord" CTA */
+.am-btn--iris {
+  background: var(--am-iris);
+  color: var(--am-text);
+  border-color: var(--am-iris);
+}
+.am-btn--iris:hover { background: var(--am-iris-2); border-color: var(--am-iris-2); }
+.am-btn--iris:active { background: var(--am-iris-d); border-color: var(--am-iris-d); }
+
+/* DANGER — destructive (delete, revoke, force-pause) */
+.am-btn--danger {
+  background: transparent;
+  color: var(--am-danger);
+  border-color: rgba(239, 68, 68, 0.4);
+}
+.am-btn--danger:hover { background: var(--am-danger-tint); border-color: var(--am-danger); }
+.am-btn--danger:active { background: rgba(239, 68, 68, 0.18); }
+
+/* WARN — caution, used sparingly (acknowledge incident, ack disk-pressure banner) */
+.am-btn--warn {
+  background: transparent;
+  color: var(--am-warn);
+  border-color: rgba(251, 191, 36, 0.4);
+}
+.am-btn--warn:hover { background: var(--am-warn-tint); border-color: var(--am-warn); }
+
+/* LINK — text-only, inline */
+.am-btn--link {
+  height: auto;
+  padding: 0;
+  background: transparent;
+  border: 0;
+  color: var(--am-accent);
+  font-family: var(--am-font);
+  font-weight: var(--am-fw-medium);
+}
+.am-btn--link:hover { color: var(--am-accent-2); text-decoration: underline; text-underline-offset: 3px; }
+
+/* ICON-ONLY — square, used in toolbars, table actions, modal close */
+.am-btn--icon {
+  width: var(--am-btn-h-md);
+  padding: 0;
+}
+.am-btn--icon.am-btn--sm { width: var(--am-btn-h-sm); }
+.am-btn--icon.am-btn--lg { width: var(--am-btn-h-lg); }
+
+/* PENDING — spinner-state for async actions */
+.am-btn[data-pending] { cursor: wait; opacity: 0.75; }
+.am-btn .am-btn-spinner {
+  width: 14px; height: 14px; flex-shrink: 0;
+  border: 2px solid currentColor; border-right-color: transparent;
+  border-radius: 50%;
+  animation: am-spin 600ms linear infinite;
+}
+@keyframes am-spin { to { transform: rotate(360deg); } }
+@media (prefers-reduced-motion: reduce) {
+  .am-btn .am-btn-spinner { animation: none; opacity: 0.6; }
+  .am-btn:active { transform: none; }
+}
+
+/* Group — paired buttons share a single rounded edge (.am-btn-group) */
+.am-btn-group { display: inline-flex; }
+.am-btn-group .am-btn { border-radius: 0; }
+.am-btn-group .am-btn:first-child { border-top-left-radius: var(--am-btn-radius); border-bottom-left-radius: var(--am-btn-radius); }
+.am-btn-group .am-btn:last-child  { border-top-right-radius: var(--am-btn-radius); border-bottom-right-radius: var(--am-btn-radius); }
+.am-btn-group .am-btn + .am-btn { margin-left: -1px; }
+
+/* ──────────────────────────────────────────────────────────────────
+   2. Tabs — .am-tabs
+   Two flavors of the same primitive:
+     .am-tabs               — underline tabs (page-level nav, dashboard
+                              top bar). Replaces dashboard .tab-bar.
+     .am-tabs--pill         — pill tabs (in-card filter rows, view
+                              switchers). Replaces dashboard .filter-pills.
+   ────────────────────────────────────────────────────────────── */
+
+.am-tabs {
+  display: flex;
+  align-items: stretch;
+  gap: 0;
+  border-bottom: 1px solid var(--am-border);
+  overflow-x: auto;
+  scrollbar-width: none;
+  -webkit-overflow-scrolling: touch;
+}
+.am-tabs::-webkit-scrollbar { display: none; }
+
+.am-tabs__tab {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--am-s-2);
+  height: var(--am-tab-h);
+  padding: 0 var(--am-tab-px);
+  flex-shrink: 0;
+  white-space: nowrap;
+  font-family: var(--am-font-display);
+  font-size: var(--am-tab-fz);
+  font-weight: var(--am-fw-ui);
+  letter-spacing: 0.02em;
+  color: var(--am-muted);
+  text-decoration: none;
+  border: 0;
+  background: transparent;
+  cursor: pointer;
+  position: relative;
+  transition: color var(--am-dur-fast) var(--am-ease);
+}
+.am-tabs__tab:hover { color: var(--am-text); }
+.am-tabs__tab[aria-selected="true"],
+.am-tabs__tab.is-active {
+  color: var(--am-accent);
+}
+/* Indicator — uses an inset bottom border so it doesn't overlap the
+   container border + animates cleanly on tab switch. */
+.am-tabs__tab[aria-selected="true"]::after,
+.am-tabs__tab.is-active::after {
+  content: '';
+  position: absolute;
+  left: var(--am-s-3); right: var(--am-s-3);
+  bottom: -1px;
+  height: var(--am-tab-indicator-h);
+  background: var(--am-accent);
+  border-radius: 2px 2px 0 0;
+}
+.am-tabs__tab .am-icon { color: currentColor; }
+
+/* Tab badge — small numeric/state indicator inline with the label */
+.am-tabs__badge {
+  display: inline-flex; align-items: center;
+  padding: 1px 7px; border-radius: var(--am-radius-pill);
+  font-family: var(--am-font-mono);
+  font-size: 10px; font-weight: 700;
+  letter-spacing: 0.04em; line-height: 1.4;
+  background: rgba(255,255,255,0.05);
+  color: var(--am-muted);
+}
+.am-tabs__badge--ok      { background: var(--am-accent-tint);  color: var(--am-accent); }
+.am-tabs__badge--warn    { background: var(--am-warn-tint);    color: var(--am-warn); }
+.am-tabs__badge--danger  { background: var(--am-danger-tint);  color: var(--am-danger); }
+.am-tabs__badge--iris    { background: var(--am-iris-tint);    color: var(--am-iris-2); }
+
+/* PILL VARIANT — for in-page filter strips */
+.am-tabs--pill {
+  border-bottom: 0;
+  gap: var(--am-s-2);
+  flex-wrap: wrap;
+}
+.am-tabs--pill .am-tabs__tab {
+  height: var(--am-btn-h-sm);
+  padding: 0 var(--am-btn-px-md);
+  border-radius: var(--am-radius-pill);
+  border: 1px solid var(--am-border);
+  background: transparent;
+  font-family: var(--am-font);
+  font-size: 12px;
+  font-weight: var(--am-fw-ui);
+  letter-spacing: 0.02em;
+  text-transform: none;
+}
+.am-tabs--pill .am-tabs__tab:hover { color: var(--am-text); border-color: var(--am-border-3); }
+.am-tabs--pill .am-tabs__tab[aria-selected="true"],
+.am-tabs--pill .am-tabs__tab.is-active {
+  background: var(--am-accent-tint);
+  border-color: rgba(110, 231, 183, 0.45);
+  color: var(--am-accent);
+}
+.am-tabs--pill .am-tabs__tab[aria-selected="true"]::after,
+.am-tabs--pill .am-tabs__tab.is-active::after { display: none; }
+
+/* SEGMENTED VARIANT — connected pill set, used as a 2–4 way switch
+   (e.g., "all / mine / others") */
+.am-tabs--segmented {
+  display: inline-flex;
+  border-bottom: 0;
+  background: var(--am-surface);
+  border: 1px solid var(--am-border);
+  border-radius: var(--am-btn-radius);
+  padding: 3px;
+  gap: 0;
+}
+.am-tabs--segmented .am-tabs__tab {
+  height: 28px;
+  padding: 0 12px;
+  border-radius: 4px;
+  font-size: 12px;
+  font-family: var(--am-font);
+  letter-spacing: 0.01em;
+}
+.am-tabs--segmented .am-tabs__tab[aria-selected="true"],
+.am-tabs--segmented .am-tabs__tab.is-active {
+  background: var(--am-surface-3);
+  color: var(--am-text);
+}
+.am-tabs--segmented .am-tabs__tab[aria-selected="true"]::after,
+.am-tabs--segmented .am-tabs__tab.is-active::after { display: none; }
+
+/* ──────────────────────────────────────────────────────────────────
+   3. Icons — .am-icon
+   Two integration paths:
+     a) Inline <svg class="am-icon"> with stroke="currentColor"
+     b) <span class="am-icon" data-icon="dashboard"></span> — JS
+        loader injects the SVG (see icons.js)
+   ────────────────────────────────────────────────────────────── */
+
+.am-icon,
+svg.am-icon {
+  display: inline-block;
+  width: var(--am-icon-md);
+  height: var(--am-icon-md);
+  flex-shrink: 0;
+  vertical-align: -0.15em;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: var(--am-icon-stroke);
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  color: currentColor;
+}
+.am-icon--sm,
+svg.am-icon--sm { width: var(--am-icon-sm); height: var(--am-icon-sm); }
+.am-icon--lg,
+svg.am-icon--lg { width: var(--am-icon-lg); height: var(--am-icon-lg); }
+.am-icon--xl,
+svg.am-icon--xl { width: var(--am-icon-xl); height: var(--am-icon-xl); }
+
+/* tone helpers — useful when the icon is decorative + paired with text */
+.am-icon--accent  { color: var(--am-accent); }
+.am-icon--warn    { color: var(--am-warn); }
+.am-icon--danger  { color: var(--am-danger); }
+.am-icon--iris    { color: var(--am-iris-2); }
+.am-icon--muted   { color: var(--am-muted); }
+
+/* ──────────────────────────────────────────────────────────────────
+   4. Legacy aliases — keep existing markup working until consumers
+      migrate to the new class names.
+   ────────────────────────────────────────────────────────────── */
+
+/* commons-app aliases (public/styles.css uses .am-button + variants) */
+.am-button            { /* maps to .am-btn */ }
+.am-button.primary,
+.am-button[data-variant="primary"]   { /* dashboard markup pattern */ }
+
+/* dashboard aliases (public/dashboard.css uses .btn + .btn.primary etc) */
+.btn:not(.am-btn) {
+  /* If the markup is already <button class="btn">, alias styles
+     in via composition. We re-declare the resolved styles so old
+     markup gets the new look without a class rename pass. */
+  display: inline-flex; align-items: center; justify-content: center; gap: var(--am-s-2);
+  height: var(--am-btn-h-md); padding: 0 var(--am-btn-px-md);
+  border-radius: var(--am-btn-radius); border: 1px solid var(--am-border);
+  background: transparent; color: var(--am-text-2);
+  font-family: var(--am-font-display); font-size: var(--am-btn-fz-md); font-weight: var(--am-fw-ui);
+  line-height: 1; cursor: pointer; white-space: nowrap;
+  transition: background var(--am-dur-fast) var(--am-ease), border-color var(--am-dur-fast) var(--am-ease), color var(--am-dur-fast) var(--am-ease);
+}
+.btn:not(.am-btn):hover { color: var(--am-text); border-color: var(--am-border-3); background: var(--am-surface); }
+.btn.primary:not(.am-btn) { background: var(--am-accent); color: var(--am-base); border-color: var(--am-accent); }
+.btn.primary:not(.am-btn):hover { background: var(--am-accent-2); border-color: var(--am-accent-2); }
+.btn.danger:not(.am-btn) { color: var(--am-danger); border-color: rgba(239, 68, 68, 0.4); background: transparent; }
+.btn.danger:not(.am-btn):hover { background: var(--am-danger-tint); border-color: var(--am-danger); }
+.btn.warn:not(.am-btn) { color: var(--am-warn); border-color: rgba(251, 191, 36, 0.4); }
+.btn.ghost:not(.am-btn) { color: var(--am-muted); border-color: transparent; }
+.btn.ghost:not(.am-btn):hover { color: var(--am-text); background: var(--am-surface); }
+
+/* dashboard tab aliases */
+.tab-link:not(.am-tabs__tab) {
+  display: inline-flex; align-items: center; gap: var(--am-s-2);
+  height: var(--am-tab-h); padding: 0 var(--am-tab-px); flex-shrink: 0;
+  white-space: nowrap; font-family: var(--am-font-display); font-size: var(--am-tab-fz);
+  font-weight: var(--am-fw-ui); letter-spacing: 0.02em; color: var(--am-muted);
+  text-decoration: none; position: relative;
+  transition: color var(--am-dur-fast) var(--am-ease);
+  border-bottom: 0;
+}
+.tab-link:not(.am-tabs__tab):hover { color: var(--am-text); }
+.tab-link.active:not(.am-tabs__tab) { color: var(--am-accent); }
+.tab-link.active:not(.am-tabs__tab)::after {
+  content: ''; position: absolute; left: var(--am-s-3); right: var(--am-s-3);
+  bottom: -1px; height: var(--am-tab-indicator-h);
+  background: var(--am-accent); border-radius: 2px 2px 0 0;
+}

@@ -1,0 +1,22 @@
+/* @agentic-media/agent-ui — webfonts.
+
+   v0.1 brings the body/display split:
+
+   • Blinker         — display + UI labels (logo, nav, headings, tabs,
+                       eyebrows). Geometric humanist sans, slightly
+                       Italian, the brand-recognisable face.
+   • Geist           — body copy + form inputs + table cells. A modern
+                       neutral grotesque from Vercel; designed for
+                       on-screen legibility at 14–16px and pairs
+                       cleanly with Blinker (similar x-height,
+                       complementary apertures). Replaces Blinker for
+                       body — the operator flagged Blinker as not
+                       legible enough at small sizes.
+   • Geist Mono      — preferred mono. JetBrains Mono kept as the
+                       legacy fallback so existing slug/code rendering
+                       on commons-app + dashboard doesn't shift.
+
+   Drop local .woff2 files into this folder and replace the @import
+   with @font-face blocks if you need offline / versioned fonts. */
+
+@import url('https://fonts.googleapis.com/css2?family=Blinker:wght@300;400;600;700;800;900&family=Geist:wght@300;400;500;600;700&family=Geist+Mono:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&display=swap');

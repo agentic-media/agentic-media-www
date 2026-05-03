@@ -1,0 +1,21 @@
+{
+  "name": "agentic-media-www",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Apex marketing site for agenticmedia.cc — beta-invite capture for commons",
+  "scripts": {
+    "dev": "astro dev",
+    "build": "astro build",
+    "preview": "astro preview",
+    "check": "astro check"
+  },
+  "dependencies": {
+    "astro": "^4.16.18"
+  },
+  "devDependencies": {
+    "typescript": "^5.6.3"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  }
+}
