@@ -68,12 +68,38 @@ img, svg {
   gap: 2rem;
 }
 
+/* Mark + eye cluster — inline SVG so currentColor flows on dark bg */
+.hero__mark-cluster {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  /* Subtle breathe on the whole cluster */
+  animation: mark-breathe 4s ease-in-out infinite;
+}
+
 .hero__mark {
   width: clamp(52px, 10vw, 72px);
   height: auto;
-  /* Subtle breathe animation — disabled for prefers-reduced-motion */
-  animation: mark-breathe 4s ease-in-out infinite;
+  color: var(--am-text);
+  display: block;
 }
+
+/* Eye-pulse dot — iris radial gradient, soft glow, positioned top-right */
+.hero__eye {
+  position: absolute;
+  top: -4px;
+  right: -8px;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: radial-gradient(circle at center, var(--am-iris) 0%, var(--am-iris-d) 55%, transparent 90%);
+  box-shadow: 0 0 10px rgba(124, 92, 255, 0.55);
+}
+
+/* eyepulse keyframe — matches dashboard design language exactly */
+@keyframes eyepulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.45; } }
+.blink { animation: eyepulse 2.4s ease infinite; }
 
 @keyframes mark-breathe {
   0%, 100% { opacity: 1; transform: scale(1); }
@@ -81,13 +107,16 @@ img, svg {
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .hero__mark { animation: none; }
+  .hero__mark-cluster { animation: none; }
+  .blink              { animation: none; }
 }
 
 .hero__wordmark {
   height: 28px;
   width: auto;
   opacity: 0.9;
+  /* Inline SVG — color must be explicit so currentColor resolves on dark bg */
+  color: var(--am-text);
 }
 
 .hero__eyebrow {
@@ -319,11 +348,15 @@ img, svg {
   display: flex;
   align-items: center;
   gap: 0.75rem;
+  /* Inline SVGs: set color so currentColor resolves */
+  color: var(--am-text);
 }
 
 .site-footer__wordmark {
   height: 20px;
   width: auto;
+  /* clamp so it doesn't stretch on wide footer; preserve wordmark aspect 280:64 */
+  max-width: 140px;
   opacity: 0.7;
 }
 

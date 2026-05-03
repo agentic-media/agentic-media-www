@@ -14,22 +14,49 @@ import Base from '../layouts/Base.astro';
     <section class="hero section" aria-label="Hero">
       <div class="container" style="display:flex;flex-direction:column;align-items:center;gap:2rem;text-align:center;">
 
-        <!-- TODO #62: replace with hero animation when operator supplies source -->
-        <img
-          src="/agent-ui/assets/marks/agenticmedia-mark.svg"
-          alt="agentic media mark"
-          class="hero__mark"
-          width="72"
-          height="72"
-          aria-hidden="true"
-        />
+        <!-- Mark + eye-pulse cluster (#62: inline SVG so currentColor flows through on dark bg) -->
+        <div class="hero__mark-cluster" aria-hidden="true">
+          <!-- Agentic Media mark (inline so currentColor works on dark hero) -->
+          <svg class="hero__mark" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="72" height="72" role="img" aria-label="Agentic Media">
+            <defs>
+              <clipPath id="am-square-hero">
+                <rect x="6" y="6" width="52" height="52" rx="10"/>
+              </clipPath>
+            </defs>
+            <g clip-path="url(#am-square-hero)">
+              <rect x="6" y="6" width="52" height="52" rx="10" fill="none" stroke="currentColor" stroke-width="2.5"/>
+              <path d="M32 14 L50 32 L32 50 L14 32 Z" fill="none" stroke="currentColor" stroke-width="2"/>
+              <path d="M32 22 L42 32 L32 42 L22 32 Z" fill="none" stroke="currentColor" stroke-width="1.5" opacity="0.7"/>
+              <circle cx="34" cy="32" r="3" fill="currentColor"/>
+              <path d="M10 14 L10 10 L14 10" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="square"/>
+              <path d="M50 10 L54 10 L54 14" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="square"/>
+              <path d="M54 50 L54 54 L50 54" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="square"/>
+              <path d="M14 54 L10 54 L10 50" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="square"/>
+            </g>
+          </svg>
+          <!-- Eye-pulse dot — the watching eye, design language from dashboard -->
+          <div class="hero__eye blink" aria-hidden="true"></div>
+        </div>
 
-        <img
-          src="/agent-ui/assets/marks/agenticmedia-wordmark.svg"
-          alt="agentic media"
-          class="hero__wordmark"
-          height="28"
-        />
+        <!-- Wordmark (inline so currentColor works on dark bg) -->
+        <svg class="hero__wordmark" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 280 64" width="280" height="28" role="img" aria-label="agentic media">
+          <defs>
+            <clipPath id="am-wm-square-hero">
+              <rect x="6" y="6" width="52" height="52" rx="10"/>
+            </clipPath>
+          </defs>
+          <g clip-path="url(#am-wm-square-hero)" color="currentColor">
+            <rect x="6" y="6" width="52" height="52" rx="10" fill="none" stroke="currentColor" stroke-width="2.5"/>
+            <path d="M32 14 L50 32 L32 50 L14 32 Z" fill="none" stroke="currentColor" stroke-width="2"/>
+            <path d="M32 22 L42 32 L32 42 L22 32 Z" fill="none" stroke="currentColor" stroke-width="1.5" opacity="0.7"/>
+            <circle cx="34" cy="32" r="3" fill="currentColor"/>
+            <path d="M10 14 L10 10 L14 10" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="square"/>
+            <path d="M50 10 L54 10 L54 14" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="square"/>
+            <path d="M54 50 L54 54 L50 54" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="square"/>
+            <path d="M14 54 L10 54 L10 50" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="square"/>
+          </g>
+          <text x="76" y="40" font-family="Blinker, ui-sans-serif, system-ui, sans-serif" font-weight="800" font-size="26" letter-spacing="-0.5" fill="currentColor">agentic<tspan opacity="0.55">media</tspan></text>
+        </svg>
 
         <p class="hero__eyebrow">Private beta — now open</p>
 
@@ -188,19 +215,43 @@ import Base from '../layouts/Base.astro';
   <footer class="site-footer" aria-label="Site footer">
     <div class="container">
       <div class="site-footer__brand">
-        <img
-          src="/agent-ui/assets/marks/agenticmedia-mark.svg"
-          alt=""
-          width="24"
-          height="24"
-          aria-hidden="true"
-        />
-        <img
-          src="/agent-ui/assets/marks/agenticmedia-wordmark.svg"
-          alt="agentic media"
-          class="site-footer__wordmark"
-          height="20"
-        />
+        <!-- Inline mark so currentColor works on dark footer bg -->
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="24" height="24" aria-hidden="true" focusable="false">
+          <defs>
+            <clipPath id="am-square-footer">
+              <rect x="6" y="6" width="52" height="52" rx="10"/>
+            </clipPath>
+          </defs>
+          <g clip-path="url(#am-square-footer)">
+            <rect x="6" y="6" width="52" height="52" rx="10" fill="none" stroke="currentColor" stroke-width="2.5"/>
+            <path d="M32 14 L50 32 L32 50 L14 32 Z" fill="none" stroke="currentColor" stroke-width="2"/>
+            <path d="M32 22 L42 32 L32 42 L22 32 Z" fill="none" stroke="currentColor" stroke-width="1.5" opacity="0.7"/>
+            <circle cx="34" cy="32" r="3" fill="currentColor"/>
+            <path d="M10 14 L10 10 L14 10" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="square"/>
+            <path d="M50 10 L54 10 L54 14" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="square"/>
+            <path d="M54 50 L54 54 L50 54" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="square"/>
+            <path d="M14 54 L10 54 L10 50" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="square"/>
+          </g>
+        </svg>
+        <!-- Inline wordmark so currentColor works on dark footer bg -->
+        <svg class="site-footer__wordmark" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 280 64" aria-label="agentic media" focusable="false">
+          <defs>
+            <clipPath id="am-wm-square-footer">
+              <rect x="6" y="6" width="52" height="52" rx="10"/>
+            </clipPath>
+          </defs>
+          <g clip-path="url(#am-wm-square-footer)" color="currentColor">
+            <rect x="6" y="6" width="52" height="52" rx="10" fill="none" stroke="currentColor" stroke-width="2.5"/>
+            <path d="M32 14 L50 32 L32 50 L14 32 Z" fill="none" stroke="currentColor" stroke-width="2"/>
+            <path d="M32 22 L42 32 L32 42 L22 32 Z" fill="none" stroke="currentColor" stroke-width="1.5" opacity="0.7"/>
+            <circle cx="34" cy="32" r="3" fill="currentColor"/>
+            <path d="M10 14 L10 10 L14 10" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="square"/>
+            <path d="M50 10 L54 10 L54 14" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="square"/>
+            <path d="M54 50 L54 54 L50 54" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="square"/>
+            <path d="M14 54 L10 54 L10 50" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="square"/>
+          </g>
+          <text x="76" y="40" font-family="Blinker, ui-sans-serif, system-ui, sans-serif" font-weight="800" font-size="26" letter-spacing="-0.5" fill="currentColor">agentic<tspan opacity="0.55">media</tspan></text>
+        </svg>
       </div>
       <p class="site-footer__tagline">audited by default</p>
       <p class="site-footer__meta">&copy; {new Date().getFullYear()} agentic media</p>
