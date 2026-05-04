@@ -1,0 +1,43 @@
+---
+export interface Props {
+  title?: string;
+  description?: string;
+  canonicalUrl?: string;
+}
+
+const {
+  title = 'agentic media — your AI agent, your channels',
+  description = 'commons puts an AI agent to work across your messaging channels — WhatsApp, Telegram, web chat — managed, audited, and always under your control. Request beta access.',
+  canonicalUrl = Astro.url.href,
+} = Astro.props;
+---
+
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="description" content={description} />
+    <title>{title}</title>
+    <link rel="canonical" href={canonicalUrl} />
+
+    <!-- agent-ui v0.1 design system — token layer first, then components -->
+    <link rel="stylesheet" href="/agent-ui/brand/tokens.css" />
+    <link rel="stylesheet" href="/agent-ui/components/components.css" />
+
+    <!-- page-level styles -->
+    <link rel="stylesheet" href="/styles/global.css" />
+
+    <!-- Open Graph -->
+    <meta property="og:title" content={title} />
+    <meta property="og:description" content={description} />
+    <meta property="og:type" content="website" />
+    <meta property="og:url" content={canonicalUrl} />
+
+    <!-- Favicon — using the agenticmedia mark from agent-ui assets -->
+    <link rel="icon" type="image/svg+xml" href="/agent-ui/assets/marks/agenticmedia-mark.svg" />
+  </head>
+  <body>
+    <slot />
+  </body>
+</html>

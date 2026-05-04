@@ -1,0 +1,10 @@
+# Cloudflare Pages configuration for agentic-media-www
+# This file tells CF Pages where to find the built output.
+# Build command is configured in the CF Pages dashboard (npm run build).
+# Task #62 — apex marketing site for agenticmedia.cc
+
+name = "agentic-media-www"
+pages_build_output_dir = "dist"
+
+# Compatibility date for Cloudflare Workers runtime
+compatibility_date = "2025-01-01"

@@ -1,0 +1,352 @@
+---
+import Base from '../layouts/Base.astro';
+---
+
+<Base
+  title="agentic media — commons beta access"
+  description="commons puts an AI agent to work across your messaging channels. Managed, audited, always under your control. Request early access to the beta."
+>
+  <main>
+
+    <!-- ─────────────────────────────────────────────────────────────────────
+         Section 1: Hero
+         ───────────────────────────────────────────────────────────────────── -->
+    <section class="hero section" aria-label="Hero">
+      <!-- OverlordEye — slow drifting particles + scanning beam, decorative.
+           Auto-disables under prefers-reduced-motion or when --am-anim-enabled=0.
+           Source: design-system v1 ui_kits/agent-ui/overlord-eye.js -->
+      <canvas id="overlord-eye" class="hero__overlord-eye" aria-hidden="true"></canvas>
+      <div class="container" style="display:flex;flex-direction:column;align-items:center;gap:2rem;text-align:center;position:relative;z-index:1;">
+
+        <!-- Mark + eye-pulse cluster (#62: inline SVG so currentColor flows through on dark bg) -->
+        <div class="hero__mark-cluster" aria-hidden="true">
+          <!-- Agentic Media mark (inline so currentColor works on dark hero) -->
+          <svg class="hero__mark" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="72" height="72" role="img" aria-label="Agentic Media">
+            <defs>
+              <clipPath id="am-square-hero">
+                <rect x="6" y="6" width="52" height="52" rx="10"/>
+              </clipPath>
+            </defs>
+            <g clip-path="url(#am-square-hero)">
+              <rect x="6" y="6" width="52" height="52" rx="10" fill="none" stroke="currentColor" stroke-width="2.5"/>
+              <path d="M32 14 L50 32 L32 50 L14 32 Z" fill="none" stroke="currentColor" stroke-width="2"/>
+              <path d="M32 22 L42 32 L32 42 L22 32 Z" fill="none" stroke="currentColor" stroke-width="1.5" opacity="0.7"/>
+              <circle cx="34" cy="32" r="3" fill="currentColor"/>
+              <path d="M10 14 L10 10 L14 10" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="square"/>
+              <path d="M50 10 L54 10 L54 14" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="square"/>
+              <path d="M54 50 L54 54 L50 54" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="square"/>
+              <path d="M14 54 L10 54 L10 50" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="square"/>
+            </g>
+          </svg>
+          <!-- Eye-pulse dot — the watching eye, design language from dashboard -->
+          <div class="hero__eye blink" aria-hidden="true"></div>
+        </div>
+
+        <!-- Wordmark (inline so currentColor works on dark bg) -->
+        <svg class="hero__wordmark" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 280 64" width="280" height="28" role="img" aria-label="agentic media">
+          <defs>
+            <clipPath id="am-wm-square-hero">
+              <rect x="6" y="6" width="52" height="52" rx="10"/>
+            </clipPath>
+          </defs>
+          <g clip-path="url(#am-wm-square-hero)" color="currentColor">
+            <rect x="6" y="6" width="52" height="52" rx="10" fill="none" stroke="currentColor" stroke-width="2.5"/>
+            <path d="M32 14 L50 32 L32 50 L14 32 Z" fill="none" stroke="currentColor" stroke-width="2"/>
+            <path d="M32 22 L42 32 L32 42 L22 32 Z" fill="none" stroke="currentColor" stroke-width="1.5" opacity="0.7"/>
+            <circle cx="34" cy="32" r="3" fill="currentColor"/>
+            <path d="M10 14 L10 10 L14 10" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="square"/>
+            <path d="M50 10 L54 10 L54 14" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="square"/>
+            <path d="M54 50 L54 54 L50 54" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="square"/>
+            <path d="M14 54 L10 54 L10 50" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="square"/>
+          </g>
+          <text x="76" y="40" font-family="Blinker, ui-sans-serif, system-ui, sans-serif" font-weight="800" font-size="26" letter-spacing="-0.5" fill="currentColor">agentic<tspan opacity="0.55">media</tspan></text>
+        </svg>
+
+        <p class="hero__eyebrow">Private beta — now open</p>
+
+        <h1 class="hero__headline">
+          Your AI agent, running your channels
+        </h1>
+
+        <p class="hero__subhead">
+          commons gives you one AI agent that works across WhatsApp, Telegram, and web chat —
+          configured by you, audited by default, and paused the moment you ask.
+        </p>
+
+        <div class="hero__cta-group">
+          <a href="#beta-invite" class="am-btn am-btn--iris am-btn--lg">
+            Request beta access to commons
+          </a>
+          <span style="font-size:var(--am-text-sm,13px);color:var(--am-muted);">Free during the beta wave &mdash; no credit card needed</span>
+        </div>
+
+      </div>
+    </section>
+
+    <!-- ─────────────────────────────────────────────────────────────────────
+         Section 2: Beta-invite form
+         ───────────────────────────────────────────────────────────────────── -->
+    <section class="invite-form-section section" id="beta-invite" aria-label="Request beta access">
+      <div class="container">
+
+        <div>
+          <p class="invite-form__label-text">Reserve your spot</p>
+          <p class="invite-form__sub">Drop your email. We'll send your invite when your wave opens.</p>
+        </div>
+
+        <form
+          class="invite-form"
+          id="invite-form"
+          action="/api/beta-invite"
+          method="POST"
+          novalidate
+        >
+          <div class="invite-form__row">
+            <label for="invite-email" class="sr-only">Email address</label>
+            <input
+              type="email"
+              id="invite-email"
+              name="email"
+              class="invite-form__input"
+              placeholder="you@example.com"
+              required
+              autocomplete="email"
+              inputmode="email"
+            />
+            <button type="submit" class="am-btn am-btn--primary am-btn--md">
+              Request access
+            </button>
+          </div>
+
+          <div>
+            <label for="invite-handle" class="sr-only">Social handle (optional)</label>
+            <input
+              type="text"
+              id="invite-handle"
+              name="handle"
+              class="invite-form__input invite-form__handle"
+              placeholder="@handle (optional — Twitter/X, LinkedIn, Telegram)"
+              autocomplete="off"
+            />
+          </div>
+
+          <p class="invite-form__note">
+            We send one email when your wave opens. No newsletters, no spam.
+          </p>
+        </form>
+
+        <div class="invite-toast" id="invite-toast" role="status" aria-live="polite">
+          <svg class="invite-toast__icon" viewBox="0 0 20 20" fill="none" aria-hidden="true">
+            <circle cx="10" cy="10" r="9" stroke="currentColor" stroke-width="1.5"/>
+            <path d="M6.5 10.5l2.5 2.5 4.5-5" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+          <span>You're on the list — we'll email you when your wave opens.</span>
+        </div>
+
+      </div>
+    </section>
+
+    <!-- ─────────────────────────────────────────────────────────────────────
+         Section 3: 3-card beat-grid
+         ───────────────────────────────────────────────────────────────────── -->
+    <section class="section" aria-label="How commons works">
+      <div class="container">
+
+        <div class="beat-grid__section-label">
+          <h2>What you get with commons</h2>
+          <p>One agent. Your channels. Full audit trail.</p>
+        </div>
+
+        <div class="beat-grid">
+
+          <!-- Card A: What commons IS -->
+          <article class="beat-card">
+            <div class="beat-card__icon" aria-hidden="true">
+              <svg viewBox="0 0 20 20" fill="none">
+                <rect x="2" y="4" width="16" height="12" rx="2" stroke="currentColor" stroke-width="1.5"/>
+                <path d="M7 8l3 3 3-3" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+              </svg>
+            </div>
+            <h3 class="beat-card__title">One agent, all your channels</h3>
+            <p class="beat-card__body">
+              commons gives you a personal AI agent that works wherever you already talk —
+              WhatsApp, Telegram, or web chat. You configure its identity and context once.
+              It handles the rest.
+            </p>
+          </article>
+
+          <!-- Card B: Trial terms -->
+          <article class="beat-card">
+            <div class="beat-card__icon" aria-hidden="true">
+              <svg viewBox="0 0 20 20" fill="none">
+                <path d="M10 2l2 6h6l-5 4 2 6-5-4-5 4 2-6L2 8h6z" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/>
+              </svg>
+            </div>
+            <h3 class="beat-card__title">Free during beta, simple after</h3>
+            <p class="beat-card__body">
+              Beta access is free while we tune capacity and pricing. When beta closes,
+              commons moves to a clear monthly plan — no surprise bills, no lock-in.
+              You stay in control of what your agent can and can't do.
+            </p>
+          </article>
+
+          <!-- Card C: Audited by default -->
+          <article class="beat-card">
+            <div class="beat-card__icon" aria-hidden="true">
+              <svg viewBox="0 0 20 20" fill="none">
+                <circle cx="10" cy="8" r="3" stroke="currentColor" stroke-width="1.5"/>
+                <path d="M2 17c0-3.3 3.6-6 8-6s8 2.7 8 6" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+                <path d="M14 3l1 1-4 4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+              </svg>
+            </div>
+            <h3 class="beat-card__title">Audited by default</h3>
+            <p class="beat-card__body">
+              Every action your agent takes goes through an operator review layer before
+              it leaves the system. Nothing sends without a log. You can pause, inspect,
+              or roll back any action at any time.
+            </p>
+          </article>
+
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- ─────────────────────────────────────────────────────────────────────
+       Footer
+       ───────────────────────────────────────────────────────────────────── -->
+  <footer class="site-footer" aria-label="Site footer">
+    <div class="container">
+      <div class="site-footer__brand">
+        <!-- Inline mark so currentColor works on dark footer bg -->
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="24" height="24" aria-hidden="true" focusable="false">
+          <defs>
+            <clipPath id="am-square-footer">
+              <rect x="6" y="6" width="52" height="52" rx="10"/>
+            </clipPath>
+          </defs>
+          <g clip-path="url(#am-square-footer)">
+            <rect x="6" y="6" width="52" height="52" rx="10" fill="none" stroke="currentColor" stroke-width="2.5"/>
+            <path d="M32 14 L50 32 L32 50 L14 32 Z" fill="none" stroke="currentColor" stroke-width="2"/>
+            <path d="M32 22 L42 32 L32 42 L22 32 Z" fill="none" stroke="currentColor" stroke-width="1.5" opacity="0.7"/>
+            <circle cx="34" cy="32" r="3" fill="currentColor"/>
+            <path d="M10 14 L10 10 L14 10" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="square"/>
+            <path d="M50 10 L54 10 L54 14" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="square"/>
+            <path d="M54 50 L54 54 L50 54" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="square"/>
+            <path d="M14 54 L10 54 L10 50" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="square"/>
+          </g>
+        </svg>
+        <!-- Inline wordmark so currentColor works on dark footer bg -->
+        <svg class="site-footer__wordmark" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 280 64" aria-label="agentic media" focusable="false">
+          <defs>
+            <clipPath id="am-wm-square-footer">
+              <rect x="6" y="6" width="52" height="52" rx="10"/>
+            </clipPath>
+          </defs>
+          <g clip-path="url(#am-wm-square-footer)" color="currentColor">
+            <rect x="6" y="6" width="52" height="52" rx="10" fill="none" stroke="currentColor" stroke-width="2.5"/>
+            <path d="M32 14 L50 32 L32 50 L14 32 Z" fill="none" stroke="currentColor" stroke-width="2"/>
+            <path d="M32 22 L42 32 L32 42 L22 32 Z" fill="none" stroke="currentColor" stroke-width="1.5" opacity="0.7"/>
+            <circle cx="34" cy="32" r="3" fill="currentColor"/>
+            <path d="M10 14 L10 10 L14 10" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="square"/>
+            <path d="M50 10 L54 10 L54 14" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="square"/>
+            <path d="M54 50 L54 54 L50 54" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="square"/>
+            <path d="M14 54 L10 54 L10 50" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="square"/>
+          </g>
+          <text x="76" y="40" font-family="Blinker, ui-sans-serif, system-ui, sans-serif" font-weight="800" font-size="26" letter-spacing="-0.5" fill="currentColor">agentic<tspan opacity="0.55">media</tspan></text>
+        </svg>
+      </div>
+      <p class="site-footer__tagline">audited by default</p>
+      <p class="site-footer__meta">&copy; {new Date().getFullYear()} agentic media</p>
+    </div>
+  </footer>
+
+  <!-- ── OverlordEye mount (decorative hero animation) ─────────────────── -->
+  <script is:inline src="/scripts/overlord-eye.js"></script>
+  <script is:inline>
+    (function () {
+      var c = document.getElementById('overlord-eye');
+      if (c && window.OverlordEye) {
+        // Canvas API needs literal colors (no CSS vars); resolve from
+        // the document's computed --am-iris with a hex fallback.
+        var rs = getComputedStyle(document.documentElement);
+        var iris = rs.getPropertyValue('--am-iris').trim() || '#7c5cff';
+        window.OverlordEye.mount(c, {
+          density: 0.5,
+          beamPeriod: 14000,
+          color: iris,
+          beamColor: '#6ee7b7',
+        });
+      }
+    })();
+  </script>
+
+  <!-- ── Form interaction script ───────────────────────────────────────── -->
+  <!-- Static output: POST to /api/beta-invite which doesn't exist in dist/.
+       In production this will be wired to a Cloudflare Worker (task #62 step 3).
+       v1 handles the form client-side: attempts POST, shows toast on any
+       2xx response; on network error shows toast anyway (optimistic UX for
+       a waitlist form — we'd rather show "you're on the list" than leave
+       the user uncertain). Real persistence lands in next dispatch. -->
+  <script>
+    const form = document.getElementById('invite-form') as HTMLFormElement | null;
+    const toast = document.getElementById('invite-toast');
+
+    if (form && toast) {
+      form.addEventListener('submit', async (e) => {
+        e.preventDefault();
+
+        const emailInput = form.querySelector<HTMLInputElement>('#invite-email');
+        const handleInput = form.querySelector<HTMLInputElement>('#invite-handle');
+
+        if (!emailInput?.value || !emailInput.checkValidity()) {
+          emailInput?.focus();
+          emailInput?.reportValidity();
+          return;
+        }
+
+        const payload = {
+          email: emailInput.value.trim(),
+          handle: handleInput?.value.trim() || undefined,
+        };
+
+        const submitBtn = form.querySelector<HTMLButtonElement>('button[type="submit"]');
+        if (submitBtn) {
+          submitBtn.textContent = 'Sending…';
+          submitBtn.disabled = true;
+          submitBtn.classList.add('am-btn--pending');
+        }
+
+        try {
+          await fetch('/api/beta-invite', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload),
+          });
+        } catch (_) {
+          // network error — still show toast; persistence is handled server-side
+          // once step 3 worker is wired.
+        }
+
+        form.style.display = 'none';
+        toast.classList.add('invite-toast--visible');
+      });
+    }
+  </script>
+
+  <!-- Skip link for keyboard navigation -->
+  <style>
+    .sr-only {
+      position: absolute;
+      width: 1px;
+      height: 1px;
+      padding: 0;
+      margin: -1px;
+      overflow: hidden;
+      clip: rect(0, 0, 0, 0);
+      white-space: nowrap;
+      border: 0;
+    }
+  </style>
+</Base>

@@ -1,0 +1,242 @@
+/* ──────────────────────────────────────────────────────────────────
+   @agentic-media/agent-ui — design tokens v0.1
+   Single source of truth for color, type, spacing, radii, shadow,
+   motion, and the new icon/button/tab token groups added in this
+   release.
+
+   Tokens are dual-namespaced:
+     --am-*  raw token (use in components)
+     --*     legacy alias matching commons-app/public/styles.css
+             (kept so existing pages don't break during migration)
+   ────────────────────────────────────────────────────────────── */
+
+@import url('./fonts.css');
+
+:root {
+  /* ── color: foundation ─────────────────────────────────────── */
+  --am-base:      #0b0c0e;
+  --am-base-2:    #101216;
+  --am-surface:   #14161a;
+  --am-surface-2: #1a1d23;
+  --am-surface-3: #20242c;   /* NEW — pressed / selected tab */
+  --am-border:    #20232a;
+  --am-border-2:  #2a2e36;
+  --am-border-3:  #353a44;   /* NEW — hover on solid surfaces */
+
+  /* ── color: text ───────────────────────────────────────────── */
+  --am-text:      #e8e9eb;
+  --am-text-2:    #c4c7cc;
+  --am-muted:     #9aa0a6;
+  --am-muted-2:   #6b7077;
+
+  /* ── color: signal ─────────────────────────────────────────── */
+  --am-accent:    #6ee7b7;
+  --am-accent-2:  #a7f3d0;
+  --am-accent-d:  #34d399;
+  --am-warn:      #fbbf24;
+  --am-danger:    #ef4444;
+  --am-success:   #22c55e;   /* NEW — distinguish from "active" mint */
+
+  /* ── color: brand ──────────────────────────────────────────── */
+  --am-iris:      #7c5cff;
+  --am-iris-2:    #a78bfa;
+  --am-iris-d:    #5b3df0;
+
+  /* ── color: tinted backgrounds ─────────────────────────────── */
+  --am-accent-tint: rgba(110, 231, 183, 0.10);
+  --am-warn-tint:   rgba(251, 191, 36, 0.12);
+  --am-danger-tint: rgba(239, 68, 68, 0.12);
+  --am-iris-tint:   rgba(124, 92, 255, 0.12);
+  --am-success-tint:rgba(34, 197, 94, 0.10);
+
+  /* ── type: families ────────────────────────────────────────── */
+  /* Display + UI = Blinker (logo, nav, headings, eyebrows, tabs).
+     Body = Geist (paragraphs, table cells, form inputs, descriptions).
+     Mono = JetBrains Mono (code, slugs, device codes, timestamps). */
+  --am-font-display: 'Blinker', ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  --am-font:         'Geist', ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  --am-font-mono:    'Geist Mono', 'JetBrains Mono', ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+
+  /* ── type: scale ──────────────────────────────────────────── */
+  --am-fz-xs:   12px;  --am-lh-xs:   1.45;
+  --am-fz-sm:   13px;  --am-lh-sm:   1.5;
+  --am-fz-md:   15px;  --am-lh-md:   1.6;   /* body — was 1.55, opened up */
+  --am-fz-lg:   17px;  --am-lh-lg:   1.5;   /* lead — was 18 */
+  --am-fz-h3:   20px;  --am-lh-h3:   1.3;
+  --am-fz-h2:   28px;  --am-lh-h2:   1.2;
+  --am-fz-h1:   40px;  --am-lh-h1:   1.1;
+  --am-fz-display: 64px; --am-lh-display: 1.0;
+  --am-fz-code: 22px;  --am-lh-code: 1.3;
+
+  /* ── type: weights ─────────────────────────────────────────── */
+  --am-fw-body:    400;
+  --am-fw-medium:  500;
+  --am-fw-ui:      600;
+  --am-fw-bold:    700;
+  --am-fw-display: 800;
+
+  /* ── type: tracking ────────────────────────────────────────── */
+  --am-tracking-tight:  -0.02em;
+  --am-tracking-normal:  0;
+  --am-tracking-wide:    0.06em;
+  --am-tracking-code:    0.15em;
+
+  /* ── spacing (4-pt grid) ──────────────────────────────────── */
+  --am-s-1:  4px;
+  --am-s-2:  8px;
+  --am-s-3:  12px;
+  --am-s-4:  16px;
+  --am-s-5:  24px;
+  --am-s-6:  32px;
+  --am-s-7:  48px;
+  --am-s-8:  64px;
+
+  /* ── layout ────────────────────────────────────────────────── */
+  --am-content-max: 720px;
+  --am-content-wide: 1200px;
+  --am-nav-h:       56px;
+
+  /* ── radii ─────────────────────────────────────────────────── */
+  --am-radius:    8px;
+  --am-radius-sm: 6px;
+  --am-radius-xs: 4px;
+  --am-radius-pill: 999px;
+
+  /* ── shadow ────────────────────────────────────────────────── */
+  --am-shadow-pop:    0 4px 24px rgba(0, 0, 0, 0.5);
+  --am-shadow-modal:  0 16px 64px rgba(0, 0, 0, 0.7);
+  --am-shadow-glow:   0 0 24px rgba(110, 231, 183, 0.25);
+
+  /* ── motion ────────────────────────────────────────────────── */
+  --am-ease:       cubic-bezier(0.2, 0, 0, 1);
+  --am-dur-fast:   100ms;
+  --am-dur-base:   160ms;
+  --am-dur-slow:   240ms;
+  --am-anim-enabled: 1;
+
+  /* ── component: button (NEW) ───────────────────────────────── */
+  --am-btn-h-sm:   28px;
+  --am-btn-h-md:   34px;
+  --am-btn-h-lg:   40px;
+  --am-btn-px-sm:  10px;
+  --am-btn-px-md:  14px;
+  --am-btn-px-lg:  18px;
+  --am-btn-radius: 6px;
+  --am-btn-fz-sm:  12px;
+  --am-btn-fz-md:  13px;
+  --am-btn-fz-lg:  14px;
+
+  /* ── component: tab (NEW) ──────────────────────────────────── */
+  --am-tab-h:        40px;
+  --am-tab-px:       16px;
+  --am-tab-fz:       12px;
+  --am-tab-indicator-h: 2px;
+
+  /* ── component: icon (NEW) ─────────────────────────────────── */
+  --am-icon-sm: 14px;
+  --am-icon-md: 16px;
+  --am-icon-lg: 20px;
+  --am-icon-xl: 24px;
+  --am-icon-stroke: 1.5;
+
+  /* ── legacy aliases ───────────────────────────────────────── */
+  --base:    var(--am-base);
+  --surface: var(--am-surface);
+  --text:    var(--am-text);
+  --muted:   var(--am-muted);
+  --accent:  var(--am-accent);
+  --warn:    var(--am-warn);
+  --danger:  var(--am-danger);
+  --radius:  var(--am-radius);
+}
+
+/* ── reduced motion ──────────────────────────────────────────── */
+@media (prefers-reduced-motion: reduce) {
+  :root { --am-anim-enabled: 0; --am-dur-fast: 0ms; --am-dur-base: 0ms; --am-dur-slow: 0ms; }
+}
+
+/* ──────────────────────────────────────────────────────────────────
+   Base typography
+   ────────────────────────────────────────────────────────────── */
+
+* { box-sizing: border-box; }
+
+html, body {
+  margin: 0;
+  padding: 0;
+  background: var(--am-base);
+  color: var(--am-text);
+  font-family: var(--am-font);              /* Geist for body */
+  font-size: var(--am-fz-md);
+  line-height: var(--am-lh-md);
+  font-weight: var(--am-fw-body);
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+  font-feature-settings: 'ss01' on, 'cv11' on;  /* Geist alts: better dotted-i, single-storey a */
+}
+
+::selection { background: var(--am-accent); color: var(--am-base); }
+
+/* Headings — Blinker. Display weight, tight tracking. */
+h1, h2, h3, h4 {
+  color: var(--am-text);
+  font-family: var(--am-font-display);
+  margin: 0 0 var(--am-s-3) 0;
+  text-wrap: balance;
+}
+h1 { font-size: var(--am-fz-h1); line-height: var(--am-lh-h1); font-weight: var(--am-fw-display); letter-spacing: var(--am-tracking-tight); }
+h2 { font-size: var(--am-fz-h2); line-height: var(--am-lh-h2); font-weight: var(--am-fw-bold); letter-spacing: var(--am-tracking-tight); }
+h3 { font-size: var(--am-fz-h3); line-height: var(--am-lh-h3); font-weight: var(--am-fw-ui); }
+h4 { font-size: var(--am-fz-lg); line-height: var(--am-lh-lg); font-weight: var(--am-fw-ui); }
+
+.am-display {
+  font-family: var(--am-font-display);
+  font-size: var(--am-fz-display);
+  line-height: var(--am-lh-display);
+  font-weight: var(--am-fw-display);
+  letter-spacing: var(--am-tracking-tight);
+}
+
+.am-eyebrow {
+  font-family: var(--am-font-display);
+  font-size: var(--am-fz-xs);
+  font-weight: var(--am-fw-ui);
+  letter-spacing: var(--am-tracking-wide);
+  text-transform: uppercase;
+  color: var(--am-muted);
+}
+
+/* Body paragraphs — Geist, opened up. */
+p {
+  color: var(--am-muted);
+  font-family: var(--am-font);
+  line-height: var(--am-lh-md);
+  margin: 0 0 var(--am-s-3) 0;
+  text-wrap: pretty;
+}
+p.am-lead { color: var(--am-text-2); font-size: var(--am-fz-lg); line-height: var(--am-lh-lg); }
+
+a {
+  color: var(--am-accent);
+  text-decoration: none;
+  transition: color var(--am-dur-fast) var(--am-ease);
+}
+a:hover { color: var(--am-accent-2); }
+
+code, kbd, samp, pre, .am-mono {
+  font-family: var(--am-font-mono);
+  font-size: 0.92em;
+}
+
+hr {
+  border: 0;
+  border-top: 1px solid var(--am-border);
+  margin: var(--am-s-6) 0;
+}
+
+/* The "logo word" lockup — Blinker, the brand-recognisable face. */
+.am-wordmark {
+  font-family: var(--am-font-display);
+  font-weight: var(--am-fw-display);
+  letter-spacing: var(--am-tracking-tight);
+}
