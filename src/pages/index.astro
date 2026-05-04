@@ -12,7 +12,11 @@ import Base from '../layouts/Base.astro';
          Section 1: Hero
          ───────────────────────────────────────────────────────────────────── -->
     <section class="hero section" aria-label="Hero">
-      <div class="container" style="display:flex;flex-direction:column;align-items:center;gap:2rem;text-align:center;">
+      <!-- OverlordEye — slow drifting particles + scanning beam, decorative.
+           Auto-disables under prefers-reduced-motion or when --am-anim-enabled=0.
+           Source: design-system v1 ui_kits/agent-ui/overlord-eye.js -->
+      <canvas id="overlord-eye" class="hero__overlord-eye" aria-hidden="true"></canvas>
+      <div class="container" style="display:flex;flex-direction:column;align-items:center;gap:2rem;text-align:center;position:relative;z-index:1;">
 
         <!-- Mark + eye-pulse cluster (#62: inline SVG so currentColor flows through on dark bg) -->
         <div class="hero__mark-cluster" aria-hidden="true">
@@ -257,6 +261,26 @@ import Base from '../layouts/Base.astro';
       <p class="site-footer__meta">&copy; {new Date().getFullYear()} agentic media</p>
     </div>
   </footer>
+
+  <!-- ── OverlordEye mount (decorative hero animation) ─────────────────── -->
+  <script is:inline src="/scripts/overlord-eye.js"></script>
+  <script is:inline>
+    (function () {
+      var c = document.getElementById('overlord-eye');
+      if (c && window.OverlordEye) {
+        // Canvas API needs literal colors (no CSS vars); resolve from
+        // the document's computed --am-iris with a hex fallback.
+        var rs = getComputedStyle(document.documentElement);
+        var iris = rs.getPropertyValue('--am-iris').trim() || '#7c5cff';
+        window.OverlordEye.mount(c, {
+          density: 0.5,
+          beamPeriod: 14000,
+          color: iris,
+          beamColor: '#6ee7b7',
+        });
+      }
+    })();
+  </script>
 
   <!-- ── Form interaction script ───────────────────────────────────────── -->
   <!-- Static output: POST to /api/beta-invite which doesn't exist in dist/.
