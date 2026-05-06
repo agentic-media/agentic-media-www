@@ -1,0 +1,67 @@
+---
+/**
+ * AgenticWordmark — agentic-media logo mark + logotype in a single inline SVG
+ *
+ * Renders mark (64×64 region) + "agentic media" text using Blinker 800 weight.
+ * All fills inherit `currentColor`. The "media" tspan is rendered at 55% opacity
+ * per the canonical design-system specification (Agentic Media Design System v2.zip,
+ * agenticmedia-wordmark.svg).
+ *
+ * Props:
+ *   height   — rendered height in px (default 28). Width scales proportionally
+ *              from the 280×64 viewBox (ratio 4.375:1), so width ≈ height * 4.375.
+ *   label    — accessible label (default "agentic media"). Pass empty string
+ *              to suppress aria-label when context already labels this.
+ *   class    — forwarded to the <svg> element.
+ */
+
+interface Props {
+  height?: number;
+  label?: string;
+  class?: string;
+}
+
+const { height = 28, label = 'agentic media', class: cls } = Astro.props;
+const width = Math.round(height * (280 / 64));
+---
+
+<svg
+  xmlns="http://www.w3.org/2000/svg"
+  viewBox="0 0 280 64"
+  width={width}
+  height={height}
+  role={label ? 'img' : undefined}
+  aria-label={label || undefined}
+  aria-hidden={label ? undefined : 'true'}
+  class={cls}
+>
+  <defs>
+    <clipPath id="am-wm-mark-clip">
+      <rect x="6" y="6" width="52" height="52" rx="10" />
+    </clipPath>
+  </defs>
+
+  <!-- Mark section (left, 64×64 region) -->
+  <g clip-path="url(#am-wm-mark-clip)">
+    <rect x="6" y="6" width="52" height="52" rx="10" fill="none" stroke="currentColor" stroke-width="2.5" />
+    <path d="M32 14 L50 32 L32 50 L14 32 Z" fill="none" stroke="currentColor" stroke-width="2" />
+    <path d="M32 22 L42 32 L32 42 L22 32 Z" fill="none" stroke="currentColor" stroke-width="1.5" opacity="0.7" />
+    <circle cx="34" cy="32" r="3" fill="currentColor" />
+    <path d="M10 14 L10 10 L14 10" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="square" />
+    <path d="M50 10 L54 10 L54 14" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="square" />
+    <path d="M54 50 L54 54 L50 54" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="square" />
+    <path d="M14 54 L10 54 L10 50" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="square" />
+  </g>
+
+  <!-- Logotype section (right, anchored at x=76) -->
+  <!-- Blinker 800: loaded via agent-ui/brand/tokens.css @font-face -->
+  <text
+    x="76"
+    y="40"
+    font-family="Blinker, ui-sans-serif, system-ui, sans-serif"
+    font-weight="800"
+    font-size="26"
+    letter-spacing="-0.5"
+    fill="currentColor"
+  >agentic<tspan fill="currentColor" opacity="0.55">media</tspan></text>
+</svg>
