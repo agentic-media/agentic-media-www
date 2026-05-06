@@ -1,0 +1,55 @@
+---
+/**
+ * AgenticMark — agentic-media logo mark (64×64 viewBox, square with diamond motif)
+ *
+ * Renders as inline SVG so `currentColor` flows through on any background.
+ * All strokes + fill inherit from `color` on the parent element.
+ *
+ * Props:
+ *   size   — px value for width/height (default 40). Height matches width.
+ *   label  — accessible label (default "Agentic Media"). Pass empty string
+ *            to suppress aria-label when the mark is purely decorative and
+ *            a sibling already labels the context.
+ *   class  — forwarded to the <svg> element for layout / spacing overrides.
+ */
+
+interface Props {
+  size?: number;
+  label?: string;
+  class?: string;
+}
+
+const { size = 40, label = 'Agentic Media', class: cls } = Astro.props;
+---
+
+<svg
+  xmlns="http://www.w3.org/2000/svg"
+  viewBox="0 0 64 64"
+  width={size}
+  height={size}
+  role={label ? 'img' : undefined}
+  aria-label={label || undefined}
+  aria-hidden={label ? undefined : 'true'}
+  class={cls}
+>
+  <defs>
+    <clipPath id="am-mark-clip">
+      <rect x="6" y="6" width="52" height="52" rx="10" />
+    </clipPath>
+  </defs>
+  <g clip-path="url(#am-mark-clip)">
+    <!-- Outer rounded-square border -->
+    <rect x="6" y="6" width="52" height="52" rx="10" fill="none" stroke="currentColor" stroke-width="2.5" />
+    <!-- Outer diamond -->
+    <path d="M32 14 L50 32 L32 50 L14 32 Z" fill="none" stroke="currentColor" stroke-width="2" />
+    <!-- Inner diamond -->
+    <path d="M32 22 L42 32 L32 42 L22 32 Z" fill="none" stroke="currentColor" stroke-width="1.5" opacity="0.7" />
+    <!-- Watching-eye centre dot -->
+    <circle cx="34" cy="32" r="3" fill="currentColor" />
+    <!-- Corner brackets (visual language: framed, observed) -->
+    <path d="M10 14 L10 10 L14 10" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="square" />
+    <path d="M50 10 L54 10 L54 14" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="square" />
+    <path d="M54 50 L54 54 L50 54" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="square" />
+    <path d="M14 54 L10 54 L10 50" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="square" />
+  </g>
+</svg>
