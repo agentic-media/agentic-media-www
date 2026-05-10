@@ -1,11 +1,16 @@
 ---
 import Base from '../layouts/Base.astro';
 
-// TURNSTILE_SITE_KEY is a PUBLIC env var set in CF Pages project settings.
-// It ships to the client as a data-sitekey attribute — safe to embed in HTML.
-// The secret key lives only in oauth-broker's TURNSTILE_SECRET env; this
-// Function never touches it.
-const turnstileSiteKey = import.meta.env.TURNSTILE_SITE_KEY || '';
+// TURNSTILE_SITE_KEY is the PUBLIC site key for the agenticmedia.cc Turnstile
+// widget. It ships to every visitor as a data-sitekey attribute — safe to
+// embed in HTML by design. Site keys are ROUTABLE PUBLIC IDENTIFIERS, not
+// secrets (the matching SECRET key lives only in oauth-broker's
+// TURNSTILE_SECRET_KEY env, which performs server-side verification of the
+// one-time tokens this widget produces). Hardcoded as a default 2026-05-10
+// because CF Pages was not injecting deployment_configs.production.env_vars
+// into the build container despite multiple PATCH attempts; the env-var path
+// can still be used to override per-environment if needed.
+const turnstileSiteKey = import.meta.env.TURNSTILE_SITE_KEY || '0x4AAAAAADMne5OBUg7sRxyD';
 ---
 
 <Base
