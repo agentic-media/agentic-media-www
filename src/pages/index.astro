@@ -1,5 +1,11 @@
 ---
 import Base from '../layouts/Base.astro';
+
+// TURNSTILE_SITE_KEY is a PUBLIC env var set in CF Pages project settings.
+// It ships to the client as a data-sitekey attribute — safe to embed in HTML.
+// The secret key lives only in oauth-broker's TURNSTILE_SECRET env; this
+// Function never touches it.
+const turnstileSiteKey = import.meta.env.TURNSTILE_SITE_KEY || '';
 ---
 
 <Base
@@ -130,17 +136,51 @@ import Base from '../layouts/Base.astro';
             />
           </div>
 
+          <!-- Cloudflare Turnstile bot-protection widget.
+               The widget is rendered client-side by the Turnstile JS bundle
+               loaded below (is:inline — not deferred, so the widget is ready
+               before the user submits). On submit, turnstile.getResponse()
+               returns the one-time token; we forward it to the relay.
+               If TURNSTILE_SITE_KEY is empty (local dev without env), the
+               widget div is still rendered but the JS no-ops — form still
+               submits and relay returns 422 missing_turnstile_token, which
+               the error handler surfaces. -->
+          {turnstileSiteKey && (
+            <div
+              class="cf-turnstile invite-form__turnstile"
+              data-sitekey={turnstileSiteKey}
+              data-theme="dark"
+              data-size="normal"
+            ></div>
+          )}
+          {!turnstileSiteKey && (
+            <p class="invite-form__note invite-form__note--warn">
+              (Bot protection widget loading...)
+            </p>
+          )}
+
           <p class="invite-form__note">
             We send one email when your wave opens. No newsletters, no spam.
           </p>
         </form>
 
+        <!-- Success toast -->
         <div class="invite-toast" id="invite-toast" role="status" aria-live="polite">
           <svg class="invite-toast__icon" viewBox="0 0 20 20" fill="none" aria-hidden="true">
             <circle cx="10" cy="10" r="9" stroke="currentColor" stroke-width="1.5"/>
             <path d="M6.5 10.5l2.5 2.5 4.5-5" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"/>
           </svg>
           <span>You're on the list — we'll email you when your wave opens.</span>
+        </div>
+
+        <!-- Error toast (relay 4xx / network error) -->
+        <div class="invite-toast invite-toast--error" id="invite-error" role="alert" aria-live="assertive">
+          <svg class="invite-toast__icon" viewBox="0 0 20 20" fill="none" aria-hidden="true">
+            <circle cx="10" cy="10" r="9" stroke="currentColor" stroke-width="1.5"/>
+            <path d="M10 6v5" stroke="currentColor" stroke-width="1.75" stroke-linecap="round"/>
+            <circle cx="10" cy="14" r="0.75" fill="currentColor"/>
+          </svg>
+          <span id="invite-error-msg">Something went wrong — please try again.</span>
         </div>
 
       </div>
@@ -282,23 +322,57 @@ import Base from '../layouts/Base.astro';
     })();
   </script>
 
+  <!-- ── Cloudflare Turnstile JS bundle ──────────────────────────────── -->
+  <!-- Loaded synchronously (is:inline) so the widget renders before submit.
+       Only injected when TURNSTILE_SITE_KEY is set (prevents a pointless
+       script load in local dev with no key). -->
+  {turnstileSiteKey && (
+    <script is:inline src="https://challenges.cloudflare.com/turnstile/v0/api.js" async defer></script>
+  )}
+
   <!-- ── Form interaction script ───────────────────────────────────────── -->
-  <!-- Static output: POST to /api/beta-invite which doesn't exist in dist/.
-       In production this will be wired to a Cloudflare Worker (task #62 step 3).
-       v1 handles the form client-side: attempts POST, shows toast on any
-       2xx response; on network error shows toast anyway (optimistic UX for
-       a waitlist form — we'd rather show "you're on the list" than leave
-       the user uncertain). Real persistence lands in next dispatch. -->
+  <!-- Task #161: relay-wired form with Turnstile token + relay error UX.
+       Reads the Turnstile one-time token from window.turnstile.getResponse()
+       at submit time, forwards it alongside {email, source, ua} to the CF
+       Pages Function at /api/beta-invite, which proxies to the oauth-broker
+       relay. The relay performs server-side Turnstile verification.
+
+       Error mapping:
+         409 email_exists     → "Looks like you're already on the list."
+         422 missing_turnstile_token → "Bot check required — please wait for the widget."
+         422 invalid_email    → re-focus email field
+         422 *                → generic relay error message
+         429                  → "Too many attempts — please try again in a minute."
+         502/network          → generic retry message -->
   <script>
     const form = document.getElementById('invite-form') as HTMLFormElement | null;
     const toast = document.getElementById('invite-toast');
+    const errorBox = document.getElementById('invite-error');
+    const errorMsg = document.getElementById('invite-error-msg');
+
+    function showError(msg: string) {
+      if (errorMsg) errorMsg.textContent = msg;
+      if (errorBox) errorBox.classList.add('invite-toast--visible');
+    }
+
+    function hideError() {
+      if (errorBox) errorBox.classList.remove('invite-toast--visible');
+    }
+
+    function errorForCode(code: string, status: number): string {
+      if (status === 409) return "Looks like you're already on the list — we'll email you when your wave opens.";
+      if (code === 'missing_turnstile_token') return "Bot check required — please wait a moment for the security widget to load, then try again.";
+      if (code === 'invalid_email') return "Please enter a valid email address.";
+      if (status === 429) return "Too many attempts — please try again in a minute.";
+      return "Something went wrong. Please try again in a moment.";
+    }
 
     if (form && toast) {
       form.addEventListener('submit', async (e) => {
         e.preventDefault();
+        hideError();
 
         const emailInput = form.querySelector<HTMLInputElement>('#invite-email');
-        const handleInput = form.querySelector<HTMLInputElement>('#invite-handle');
 
         if (!emailInput?.value || !emailInput.checkValidity()) {
           emailInput?.focus();
@@ -306,10 +380,10 @@ import Base from '../layouts/Base.astro';
           return;
         }
 
-        const payload = {
-          email: emailInput.value.trim(),
-          handle: handleInput?.value.trim() || undefined,
-        };
+        // Get Turnstile token. window.turnstile is defined by the CF bundle.
+        // If undefined (local dev / bundle not loaded), send empty string —
+        // relay will return 422 missing_turnstile_token which surfaces below.
+        const turnstileToken: string = (window as any).turnstile?.getResponse() || '';
 
         const submitBtn = form.querySelector<HTMLButtonElement>('button[type="submit"]');
         if (submitBtn) {
@@ -318,24 +392,63 @@ import Base from '../layouts/Base.astro';
           submitBtn.classList.add('am-btn--pending');
         }
 
+        const resetBtn = () => {
+          if (submitBtn) {
+            submitBtn.textContent = 'Request access';
+            submitBtn.disabled = false;
+            submitBtn.classList.remove('am-btn--pending');
+          }
+          // Reset widget so user can retry
+          try { (window as any).turnstile?.reset(); } catch {}
+        };
+
         try {
-          await fetch('/api/beta-invite', {
+          const res = await fetch('/api/beta-invite', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(payload),
+            body: JSON.stringify({
+              email: emailInput.value.trim(),
+              turnstile_token: turnstileToken,
+            }),
           });
-        } catch (_) {
-          // network error — still show toast; persistence is handled server-side
-          // once step 3 worker is wired.
-        }
 
-        form.style.display = 'none';
-        toast.classList.add('invite-toast--visible');
+          if (res.ok) {
+            // Success path
+            form.style.display = 'none';
+            toast.classList.add('invite-toast--visible');
+            return;
+          }
+
+          // Error path — parse relay error code
+          let data: { error?: string } = {};
+          try { data = await res.json(); } catch {}
+          const code = data.error || '';
+
+          // 409 is a soft success — email already registered
+          if (res.status === 409) {
+            form.style.display = 'none';
+            toast.classList.add('invite-toast--visible');
+            return;
+          }
+
+          // Re-focus email for email shape errors
+          if (code === 'invalid_email') {
+            emailInput.focus();
+          }
+
+          showError(errorForCode(code, res.status));
+          resetBtn();
+
+        } catch {
+          // Network error
+          showError("Network error — please check your connection and try again.");
+          resetBtn();
+        }
       });
     }
   </script>
 
-  <!-- Skip link for keyboard navigation -->
+  <!-- Skip link + Turnstile widget spacing + error toast -->
   <style>
     .sr-only {
       position: absolute;
@@ -347,6 +460,27 @@ import Base from '../layouts/Base.astro';
       clip: rect(0, 0, 0, 0);
       white-space: nowrap;
       border: 0;
+    }
+
+    /* Turnstile widget — block-level with breathing room */
+    .invite-form__turnstile {
+      margin: 0.75rem 0;
+    }
+
+    /* Error toast — red accent vs green success toast */
+    .invite-toast--error {
+      display: none;
+      border-left-color: var(--am-danger, #ef4444);
+      color: var(--am-danger, #ef4444);
+    }
+    .invite-toast--error.invite-toast--visible {
+      display: flex;
+    }
+
+    /* Dev-only warning note */
+    .invite-form__note--warn {
+      color: var(--am-muted);
+      font-style: italic;
     }
   </style>
 </Base>
