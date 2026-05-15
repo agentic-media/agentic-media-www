@@ -1,6 +1,8 @@
 # @agentic-media/agent-ui — Integration Guide
 
-v0.1 — adds **buttons**, **tabs**, and a **73-icon set** on top of the existing tokens + Blinker/Geist type system.
+v0.2 — adds a **fluid scale** (`brand/fluid.css`) and **vendored htmx**
+(`vendor/htmx.min.js` + extensions) on top of the v0.1 tokens, buttons,
+tabs, and 73-icon set.
 
 ## What's in this drop
 
@@ -8,17 +10,69 @@ v0.1 — adds **buttons**, **tabs**, and a **73-icon set** on top of the existin
 dist/agent-ui/
 ├── brand/
 │   ├── tokens.css          ← extended: button/tab/icon token groups
-│   └── fonts.css           ← (unchanged from v0)
+│   ├── fonts.css           ← (unchanged from v0)
+│   └── fluid.css           ← NEW v0.2: clamp() type/spacing, .am-card / .am-stack / .am-cluster / .am-grid
 ├── components/
 │   ├── components.css      ← .am-btn, .am-tabs, .am-icon (+ legacy aliases)
 │   └── icons.js            ← optional: <span data-icon="…"> loader
 ├── icons/
 │   ├── sprite.svg          ← 73 symbols, reference via <use href="…#name"/>
 │   └── <name>.svg × 73     ← standalone files (CDN / Next.js Image / etc.)
+├── vendor/                 ← NEW v0.2: pinned third-party libs (see VENDOR.md)
+│   ├── htmx.min.js         ← htmx 2.0.4 (raw — for separate loading)
+│   ├── htmx-ext-sse.js     ← SSE extension 2.2.2 (raw)
+│   ├── htmx-bundle.min.js  ← htmx.min.js + htmx-ext-sse.js (the canonical script to include — avoids extension-registration race)
+│   └── htmx-ext-head-support.js
 └── assets/                 ← brand identity, NOT UI icons (added by overlord v0.1.0)
     ├── marks/              ← agenticmedia-mark.svg, agenticmedia-wordmark.svg, commons-crest.svg
     └── channels/           ← discord.svg, github.svg, telegram.svg, whatsapp.svg
 ```
+
+## Drop-in install (v0.2)
+
+In your app's HTML head — **three stylesheets + the htmx script**:
+
+```html
+<link rel="stylesheet" href="/agent-ui/brand/tokens.css"/>
+<link rel="stylesheet" href="/agent-ui/brand/fluid.css"/>
+<link rel="stylesheet" href="/agent-ui/components/components.css"/>
+<script src="/agent-ui/vendor/htmx-bundle.min.js" defer></script>
+```
+
+Order matters: `tokens.css` defines variables, `fluid.css` extends them
+with the clamp-based scale, `components.css` consumes both. `htmx-bundle.min.js`
+is the canonical script — it concatenates `htmx.min.js` and `htmx-ext-sse.js`
+so the extension registers in the same script turn as htmx itself, avoiding
+a subtle race where htmx scans the DOM before the SSE extension is available.
+
+`tokens.css` `@import`s `fonts.css` itself. No separate font tag needed.
+
+## Fluid layout primitives
+
+Optional, opt-in layout helpers added in v0.2. See `brand/fluid.css` for
+the full set; the most useful ones:
+
+| Class | Use for |
+|---|---|
+| `.am-fluid` | Apply the clamp scale to all type inside a wrapper |
+| `.am-stack` | Vertical flow with consistent gap (`--am-stack-gap`) |
+| `.am-cluster` | Horizontal flow that wraps (buttons, pills) |
+| `.am-grid` | Auto-fit grid (`--am-grid-min` controls item min-width) |
+| `.am-card` | Surface card with fluid padding + container-query context |
+| `.am-content` | Centred reading column (`--am-content`, `-narrow`, `-wide`) |
+
+Cards become container-query roots. Their inner `.am-grid` collapses to
+one column when the **card** narrows, independent of viewport — this is
+how a sidebar widget can render single-column while a full-width widget
+on the same page renders multi-column.
+
+## htmx baseline
+
+The vendored htmx covers every interactive surface in the agentic-media
+dashboard constellation. The canonical layer that wires it is
+`control-center/ui` (consumed via the `@/ui/*` path alias in each app);
+see `control-center/ui/conventions/astro-htmx.md` for the request/response
+contract, SSE patterns, and toast wiring.
 
 ### assets/ — brand marks and channel glyphs
 

@@ -1,0 +1,235 @@
+---
+/**
+ * DataTable — sortable monospace tabular data
+ *
+ * Column definitions drive header rendering. The component renders three
+ * states: data rows (via slot), loading skeleton (4 skeleton rows), and
+ * empty state (via EmptyState component).
+ *
+ * Sorting is client-side only — set `sortKey` and handle 'dsh:table-sort'
+ * custom events in your page script.
+ *
+ * NOTE: Row content is rendered via a named slot "rows". The consumer
+ * provides <tr> elements directly so cell-level components (StatusPill,
+ * ExpiryChip) can be composed naturally.
+ *
+ * Column def alignment classes:
+ *   mono    → dsh-td--mono  (monospace, muted, 12px)
+ *   right   → dsh-td--right
+ *   num     → dsh-td--num   (tabular nums)
+ *   name    → dsh-td--name  (13px mono, primary text)
+ *   actions → dsh-td--actions (right-aligned, no-wrap)
+ */
+
+interface ColumnDef {
+  key: string;
+  label: string;
+  /** Apply .dsh-td--mono class to cells in this column. */
+  mono?: boolean;
+  /** Apply .dsh-td--right to header cell. */
+  right?: boolean;
+  /** Width hint, e.g. '120px' or '1%'. */
+  width?: string;
+  /** Whether this column is sortable. */
+  sortable?: boolean;
+}
+
+type TableState = 'data' | 'loading' | 'empty';
+
+interface Props {
+  /** Column definitions. */
+  columns: ColumnDef[];
+  /** Current render state. */
+  state?: TableState;
+  /** Number of skeleton rows to show in loading state. */
+  skeletonRows?: number;
+  /** Current sort column key (for aria-sort on header). */
+  sortKey?: string;
+  /** Current sort direction. */
+  sortDir?: 'ascending' | 'descending';
+  /** Optional table ID for aria linkage. */
+  tableId?: string;
+}
+
+const {
+  columns,
+  state = 'data',
+  skeletonRows = 4,
+  sortKey,
+  sortDir = 'ascending',
+  tableId,
+} = Astro.props;
+---
+
+<div class="dsh-table-wrap">
+  <table class="dsh-table" id={tableId}>
+    <thead>
+      <tr>
+        {columns.map(col => (
+          <th
+            class:list={[col.right && 'dsh-td--right', col.mono && 'dsh-td--mono']}
+            style={col.width ? `width:${col.width}` : undefined}
+            aria-sort={col.sortable && sortKey === col.key ? sortDir : undefined}
+            data-col={col.sortable ? col.key : undefined}
+          >
+            {col.label}
+          </th>
+        ))}
+      </tr>
+    </thead>
+    <tbody>
+      {state === 'loading' && Array.from({ length: skeletonRows }, (_, i) => (
+        <tr aria-hidden="true">
+          {columns.map(col => (
+            <td class:list={[col.right && 'dsh-td--right']}>
+              <span class:list={['dsh-skel', col.right ? 'dsh-skel--xs' : 'dsh-skel--md']}></span>
+            </td>
+          ))}
+        </tr>
+      ))}
+      {state === 'data' && <slot name="rows" />}
+      {state === 'empty' && (
+        <tr>
+          <td colspan={columns.length}>
+            <slot name="empty">
+              <div class="dsh-empty" aria-live="polite">
+                <div class="dsh-empty__title">No data</div>
+              </div>
+            </slot>
+          </td>
+        </tr>
+      )}
+    </tbody>
+  </table>
+</div>
+
+<style>
+  .dsh-table-wrap {
+    overflow-x: auto;
+  }
+
+  .dsh-table {
+    width: 100%;
+    border-collapse: separate;
+    border-spacing: 0;
+    font-family: var(--am-font);
+    font-size: var(--am-fz-sm);
+    color: var(--am-text-2);
+  }
+
+  .dsh-table thead th {
+    position: sticky;
+    top: 0;
+    text-align: left;
+    font-family: var(--am-font-mono);
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: var(--am-tracking-wide);
+    text-transform: uppercase;
+    color: var(--am-muted);
+    padding: var(--am-s-3) var(--am-s-4);
+    border-bottom: 1px solid var(--am-border);
+    background: var(--am-surface);
+    white-space: nowrap;
+  }
+
+  .dsh-table thead th[aria-sort] {
+    cursor: pointer;
+    user-select: none;
+  }
+
+  .dsh-table thead th[aria-sort]:hover {
+    color: var(--am-text-2);
+  }
+
+  .dsh-table thead th[aria-sort="ascending"]::after {
+    content: ' \2191'; /* ↑ */
+    color: var(--am-accent);
+  }
+
+  .dsh-table thead th[aria-sort="descending"]::after {
+    content: ' \2193'; /* ↓ */
+    color: var(--am-accent);
+  }
+
+  .dsh-table tbody td {
+    padding: 12px var(--am-s-4);
+    border-bottom: 1px solid var(--am-border);
+    vertical-align: middle;
+  }
+
+  .dsh-table tbody tr:last-child td {
+    border-bottom: 0;
+  }
+
+  .dsh-table tbody tr:hover td {
+    background: rgba(255, 255, 255, 0.02);
+  }
+
+  /* Column modifier classes — applied by consumer on <td> elements */
+  :global(.dsh-td--mono),
+  .dsh-table th.dsh-td--mono {
+    font-family: var(--am-font-mono);
+    font-size: 12px;
+    color: var(--am-muted);
+    letter-spacing: 0.01em;
+  }
+
+  :global(.dsh-td--right),
+  .dsh-table th.dsh-td--right {
+    text-align: right;
+  }
+
+  :global(.dsh-td--num) {
+    font-variant-numeric: tabular-nums;
+    font-family: var(--am-font-mono);
+    font-size: 12px;
+  }
+
+  :global(.dsh-td--name) {
+    color: var(--am-text);
+    font-weight: var(--am-fw-medium);
+    font-family: var(--am-font-mono);
+    font-size: 13px;
+  }
+
+  :global(.dsh-td--actions) {
+    width: 1%;
+    white-space: nowrap;
+    text-align: right;
+  }
+
+  /* Skeleton bars */
+  .dsh-skel {
+    display: inline-block;
+    background: linear-gradient(90deg, var(--am-surface-2), var(--am-surface-3), var(--am-surface-2));
+    background-size: 200% 100%;
+    border-radius: 4px;
+    animation: dsh-skel 1.4s ease infinite;
+    height: 14px;
+    width: 100%;
+  }
+
+  .dsh-skel--xs { width: 32px; }
+  .dsh-skel--md { width: 120px; }
+
+  @media (prefers-reduced-motion: reduce) {
+    .dsh-skel {
+      animation: none;
+      opacity: 0.45;
+      background: var(--am-surface-2);
+    }
+  }
+
+  /* Empty state inside table */
+  .dsh-empty {
+    text-align: center;
+    padding: var(--am-s-6) var(--am-s-5);
+  }
+
+  .dsh-empty__title {
+    font-family: var(--am-font-display);
+    font-size: var(--am-fz-sm);
+    color: var(--am-muted);
+  }
+</style>

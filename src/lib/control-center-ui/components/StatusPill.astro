@@ -1,0 +1,91 @@
+---
+/**
+ * StatusPill — colored dot + uppercase label
+ *
+ * Tones: ok (mint, eyepulse dot), warn (amber), danger (red), muted (grey), iris (brand).
+ * Always uppercase. Always with a leading dot.
+ */
+
+type Tone = 'ok' | 'warn' | 'danger' | 'muted' | 'iris';
+
+interface Props {
+  /** Display label, e.g. 'running', 'pending', 'error'. */
+  label: string;
+  /** Visual tone. Defaults to 'muted'. */
+  tone?: Tone;
+}
+
+const { label, tone = 'muted' } = Astro.props;
+---
+
+<span class:list={['dsh-pill', `dsh-pill--${tone}`]}>
+  <span class="dsh-pill__dot" aria-hidden="true"></span>
+  {label}
+</span>
+
+<style>
+  .dsh-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    height: 22px;
+    padding: 0 10px 0 8px;
+    border-radius: var(--am-radius-pill);
+    font-family: var(--am-font-display);
+    font-size: 10px;
+    font-weight: var(--am-fw-bold);
+    letter-spacing: var(--am-tracking-wide);
+    text-transform: uppercase;
+    border: 1px solid transparent;
+    white-space: nowrap;
+  }
+
+  .dsh-pill__dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    flex-shrink: 0;
+    background: currentColor;
+  }
+
+  /* Tones */
+  .dsh-pill--ok {
+    color: var(--am-accent);
+    background: var(--am-accent-tint);
+    border-color: rgba(110, 231, 183, 0.25);
+  }
+
+  .dsh-pill--ok .dsh-pill__dot {
+    animation: dsh-eyepulse 2.4s ease-in-out infinite;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .dsh-pill--ok .dsh-pill__dot {
+      animation: none;
+    }
+  }
+
+  .dsh-pill--warn {
+    color: var(--am-warn);
+    background: var(--am-warn-tint);
+    border-color: rgba(251, 191, 36, 0.25);
+  }
+
+  .dsh-pill--danger {
+    color: var(--am-danger);
+    background: var(--am-danger-tint);
+    border-color: rgba(239, 68, 68, 0.25);
+  }
+
+  .dsh-pill--muted {
+    color: var(--am-muted);
+    background: rgba(154, 160, 166, 0.08);
+    border-color: rgba(154, 160, 166, 0.18);
+  }
+
+  .dsh-pill--iris {
+    color: var(--am-iris-2);
+    background: var(--am-iris-tint);
+    border-color: rgba(124, 92, 255, 0.25);
+  }
+</style>

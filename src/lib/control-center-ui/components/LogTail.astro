@@ -1,0 +1,218 @@
+---
+/**
+ * LogTail — auto-scrolling tail of log lines
+ *
+ * Renders a fixed-height scrollable log viewer with a "follow" toggle.
+ * When follow is on, new lines added to the DOM auto-scroll to bottom.
+ *
+ * Initial log lines can be passed as `lines` prop or via slot.
+ * Line objects support a `tone` for ok (accent) or err (danger) tag coloring.
+ *
+ * The follow toggle is a labelled checkbox; the JS wires up the scroll behavior.
+ * A unique `logId` is required if multiple LogTail components appear on one page.
+ */
+
+interface LogLine {
+  ts?: string;   // timestamp, e.g. '12:34:01'
+  tag?: string;  // source tag, e.g. 'gateway'
+  msg: string;
+  tone?: 'ok' | 'err';
+}
+
+interface Props {
+  /** Optional source label shown in header, e.g. 'docker logs openclaw-gateway'. */
+  source?: string;
+  /** Number of lines label shown in header, e.g. 200. */
+  lineCount?: number;
+  /** Pre-rendered log lines. */
+  lines?: LogLine[];
+  /** Whether follow mode starts enabled. Default true. */
+  follow?: boolean;
+  /** Unique ID for ARIA + JS wiring. */
+  logId?: string;
+  /** Fixed height of the log body. Default '320px'. */
+  height?: string;
+}
+
+const {
+  source,
+  lineCount,
+  lines = [],
+  follow = true,
+  logId = `log-${Math.random().toString(36).slice(2, 8)}`,
+  height = '320px',
+} = Astro.props;
+---
+
+<div class="dsh-log" id={logId}>
+  <div class="dsh-log__head">
+    <span>
+      {source && <span class="dsh-log__source">{source}</span>}
+      {lineCount !== undefined && (
+        <span class="dsh-log__count"> — last {lineCount} lines</span>
+      )}
+    </span>
+    <label class="dsh-log__follow">
+      <input
+        type="checkbox"
+        checked={follow}
+        aria-label="Follow log"
+        data-log-follow={logId}
+      />
+      follow
+    </label>
+  </div>
+  <div class="dsh-log__body" id={`${logId}-body`} style={`height:${height}`}>
+    {lines.map(line => (
+      <div class:list={['dsh-log__line', line.tone && `dsh-log__line--${line.tone}`]}>
+        {line.ts && <span class="dsh-log__ts">{line.ts}</span>}
+        {line.tag && <span class="dsh-log__tag">{line.tag}</span>}
+        <span>{line.msg}</span>
+      </div>
+    ))}
+    <slot />
+  </div>
+</div>
+
+<style>
+  .dsh-log {
+    background: var(--am-base);
+    border: 1px solid var(--am-border);
+    border-radius: var(--am-radius-sm);
+    font-family: var(--am-font-mono);
+    font-size: 12px;
+    line-height: 1.55;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+  }
+
+  .dsh-log__head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 6px 12px;
+    border-bottom: 1px solid var(--am-border);
+    font-size: 10px;
+    letter-spacing: var(--am-tracking-wide);
+    text-transform: uppercase;
+    color: var(--am-muted);
+    font-weight: 700;
+    background: var(--am-base-2);
+    flex-shrink: 0;
+  }
+
+  .dsh-log__count {
+    color: var(--am-muted-2);
+    font-weight: 500;
+    text-transform: none;
+    letter-spacing: 0;
+  }
+
+  .dsh-log__follow {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-family: var(--am-font-mono);
+    font-size: 10px;
+    letter-spacing: var(--am-tracking-wide);
+    text-transform: uppercase;
+    color: var(--am-muted);
+    cursor: pointer;
+    user-select: none;
+  }
+
+  /* Custom toggle switch */
+  .dsh-log__follow input[type="checkbox"] {
+    appearance: none;
+    width: 22px;
+    height: 12px;
+    border-radius: 999px;
+    background: var(--am-border);
+    position: relative;
+    cursor: pointer;
+    flex-shrink: 0;
+  }
+
+  .dsh-log__follow input[type="checkbox"]::after {
+    content: '';
+    position: absolute;
+    top: 1px;
+    left: 1px;
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    background: var(--am-muted);
+    transition:
+      transform var(--am-dur-fast) var(--am-ease),
+      background var(--am-dur-fast) var(--am-ease);
+  }
+
+  .dsh-log__follow input[type="checkbox"]:checked {
+    background: var(--am-accent-tint);
+  }
+
+  .dsh-log__follow input[type="checkbox"]:checked::after {
+    transform: translateX(10px);
+    background: var(--am-accent);
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .dsh-log__follow input[type="checkbox"]::after {
+      transition: none;
+    }
+  }
+
+  .dsh-log__body {
+    flex: 1;
+    overflow: auto;
+    padding: 8px 12px;
+    color: var(--am-text-2);
+  }
+
+  .dsh-log__body::-webkit-scrollbar { width: 8px; }
+  .dsh-log__body::-webkit-scrollbar-thumb { background: var(--am-border-2); border-radius: 4px; }
+  .dsh-log__body::-webkit-scrollbar-track { background: transparent; }
+
+  .dsh-log__line {
+    display: grid;
+    grid-template-columns: max-content max-content 1fr;
+    gap: 10px;
+    padding: 1px 0;
+    white-space: pre-wrap;
+    word-break: break-word;
+  }
+
+  /* Lines with no ts or tag collapse those columns */
+  .dsh-log__line:not(:has(.dsh-log__ts)) {
+    grid-template-columns: max-content 1fr;
+  }
+
+  .dsh-log__ts  { color: var(--am-muted-2); }
+  .dsh-log__tag { color: var(--am-iris-2); }
+
+  .dsh-log__line--ok .dsh-log__tag { color: var(--am-accent); }
+  .dsh-log__line--err .dsh-log__tag { color: var(--am-danger); }
+  .dsh-log__line--err { color: var(--am-danger); }
+</style>
+
+<script is:inline>
+  document.querySelectorAll('[data-log-follow]').forEach(checkbox => {
+    const logId = checkbox.dataset.logFollow;
+    const body = document.getElementById(`${logId}-body`);
+    if (!body) return;
+
+    function maybeScrollToBottom() {
+      if (checkbox.checked) body.scrollTop = body.scrollHeight;
+    }
+
+    // Initial scroll
+    maybeScrollToBottom();
+
+    checkbox.addEventListener('change', maybeScrollToBottom);
+
+    // If consumer adds new lines dynamically (e.g. via SSE), observe and scroll
+    const observer = new MutationObserver(maybeScrollToBottom);
+    observer.observe(body, { childList: true });
+  });
+</script>

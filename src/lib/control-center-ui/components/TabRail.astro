@@ -1,0 +1,336 @@
+---
+/**
+ * TabRail — vertical primary navigation rail
+ *
+ * 8-item / 3-section design. Active item derived from currentPath.
+ * Collapses to icon-only at ≤1024px via CSS (class .dsh-rail--collapsed
+ * can also be applied manually for operator preference).
+ * At ≤768px the rail is a fixed drawer — driven by DashShell's toggle.
+ *
+ * Props receive the same TabRegistration[] that DashShell holds.
+ * The design groups tabs into 3 named sections defined by `railSections`.
+ * If the consumer provides plain tabs with no section metadata, they are
+ * rendered flat under a single "navigation" section.
+ */
+import type { TabRegistration, TabBadge } from '../types/tabs.ts';
+
+interface RailSection {
+  label: string;
+  tabs: TabRegistration[];
+}
+
+interface Props {
+  tabs: TabRegistration[];
+  currentPath: string;
+  /** Lordship slug shown in rail footer. */
+  slug?: string;
+  /** Tailnet hostname shown in rail footer. */
+  hostname?: string;
+  /** Version string shown in rail footer. */
+  version?: string;
+  /**
+   * Named sections grouping rail items.
+   * Defaults to the canonical lordship-dashboard 3-section layout when
+   * no custom sections are provided.
+   */
+  sections?: RailSection[];
+  /**
+   * Brand name shown above the rail. Two-part: a prefix + a faded
+   * suffix (`{prefix}<em>·{suffix}</em>`). Defaults to "lord·ship"
+   * for the lordship-dashboard surface. Overlord-dashboard passes
+   * "overlord" / "·dash" so its rail shows the right identity.
+   */
+  brandPrefix?: string;
+  brandSuffix?: string;
+}
+
+const {
+  tabs,
+  currentPath,
+  slug,
+  hostname,
+  version,
+  sections,
+  brandPrefix = 'lord',
+  brandSuffix = 'ship',
+} = Astro.props;
+
+function isActive(tab: TabRegistration): boolean {
+  if (tab.path === '/') return currentPath === '/';
+  return currentPath.startsWith(tab.path);
+}
+
+function badgeToneClass(tone: TabBadge['tone']): string {
+  return tone === 'ok' ? 'dsh-rail__badge--ok'
+    : tone === 'danger' ? 'dsh-rail__badge--danger'
+    : ''; // warn is the default badge style
+}
+
+// Resolve sections — use provided, or group by icon heuristic, or flat
+const resolvedSections: RailSection[] = sections ?? (() => {
+  // Default 3-section grouping by canonical icon names
+  const controlIcons = new Set(['home', 'grid', 'bot', 'terminal', 'database', 'network']);
+  const passthroughIcons = new Set(['folder', 'monitor', 'list', 'external-link']);
+  const systemIcons = new Set(['key', 'cpu', 'settings', 'server']);
+
+  const control: TabRegistration[] = [];
+  const passthrough: TabRegistration[] = [];
+  const system: TabRegistration[] = [];
+  const rest: TabRegistration[] = [];
+
+  for (const tab of tabs) {
+    if (controlIcons.has(tab.icon)) control.push(tab);
+    else if (passthroughIcons.has(tab.icon)) passthrough.push(tab);
+    else if (systemIcons.has(tab.icon)) system.push(tab);
+    else rest.push(tab);
+  }
+
+  const result: RailSection[] = [];
+  if (control.length) result.push({ label: 'control', tabs: control });
+  if (passthrough.length) result.push({ label: 'passthrough', tabs: passthrough });
+  if (system.length) result.push({ label: 'system', tabs: system });
+  if (rest.length) result.push({ label: 'navigation', tabs: rest });
+  return result;
+})();
+
+// Hostname display: strip the slug prefix for brevity in footer
+const tailnetDisplay = hostname?.replace(`${slug}.`, '') ?? hostname ?? '';
+---
+
+<nav class="dsh-rail" aria-label="Primary">
+
+  <!-- Brand mark -->
+  <a class="dsh-rail__brand" href="/">
+    <svg class="dsh-rail__brand-mark" viewBox="0 0 24 24" aria-hidden="true">
+      <path d="M12 2 4 6v6c0 4.5 3.2 8.5 8 10 4.8-1.5 8-5.5 8-10V6l-8-4Z"
+        fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/>
+      <path d="m9 12 2.2 2.2L15 10.4"
+        fill="none" stroke="currentColor" stroke-width="1.6"
+        stroke-linecap="round" stroke-linejoin="round"/>
+    </svg>
+    <span class="dsh-rail__brand-name">{brandPrefix}<em>·{brandSuffix}</em></span>
+  </a>
+
+  <!-- Sections + items -->
+  {resolvedSections.map(section => (
+    <>
+      <div class="dsh-rail__section">{section.label}</div>
+      {section.tabs.map(tab => (
+        <a
+          class="dsh-rail__item"
+          href={tab.path}
+          aria-current={isActive(tab) ? 'page' : undefined}
+          title={tab.label}
+        >
+          <svg class="am-icon" aria-hidden="true">
+            <use href={`/agent-ui/icons/sprite.svg#${tab.icon}`}></use>
+          </svg>
+          <span>{tab.label}</span>
+          {tab.badge ? (
+            <span class:list={['dsh-rail__badge', badgeToneClass(tab.badge.tone)]}
+              aria-label={tab.badge.label}>
+              {tab.badge.count > 0 ? tab.badge.label : ''}
+            </span>
+          ) : (
+            <span></span>
+          )}
+        </a>
+      ))}
+    </>
+  ))}
+
+  <div class="dsh-rail__spacer"></div>
+
+  <!-- Footer meta -->
+  {(slug || tailnetDisplay || version) && (
+    <div class="dsh-rail__footer">
+      <div class="dsh-rail__footer-meta">
+        {slug && <strong>{slug}</strong>}
+        {tailnetDisplay && <><br />{tailnetDisplay}</>}
+        {version && <><br />{version}</>}
+      </div>
+    </div>
+  )}
+
+</nav>
+
+<style>
+  .dsh-rail {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    padding: var(--am-s-4) var(--am-s-2);
+    gap: var(--am-s-1);
+  }
+
+  .dsh-rail__brand {
+    display: flex;
+    align-items: center;
+    gap: var(--am-s-2);
+    padding: var(--am-s-2) var(--am-s-3);
+    margin-bottom: var(--am-s-4);
+    color: var(--am-text);
+    text-decoration: none;
+  }
+
+  .dsh-rail__brand-mark {
+    width: 22px;
+    height: 22px;
+    color: var(--am-accent);
+    flex-shrink: 0;
+  }
+
+  .dsh-rail__brand-name {
+    font-family: var(--am-font-display);
+    font-weight: var(--am-fw-display);
+    font-size: 15px;
+    letter-spacing: var(--am-tracking-tight);
+  }
+
+  .dsh-rail__brand-name em {
+    font-style: normal;
+    opacity: 0.55;
+  }
+
+  .dsh-rail__section {
+    padding: var(--am-s-3) var(--am-s-3) var(--am-s-1);
+    font-family: var(--am-font-mono);
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: var(--am-tracking-wide);
+    text-transform: uppercase;
+    color: var(--am-muted-2);
+  }
+
+  .dsh-rail__item {
+    display: grid;
+    grid-template-columns: 20px 1fr auto;
+    align-items: center;
+    gap: var(--am-s-3);
+    height: 36px;
+    padding: 0 var(--am-s-3);
+    border-radius: var(--am-radius-sm);
+    font-family: var(--am-font-display);
+    font-size: 13px;
+    font-weight: var(--am-fw-medium);
+    letter-spacing: 0.01em;
+    color: var(--am-text-2);
+    text-decoration: none;
+    position: relative;
+    transition:
+      background var(--am-dur-fast) var(--am-ease),
+      color var(--am-dur-fast) var(--am-ease);
+  }
+
+  .dsh-rail__item:hover {
+    background: var(--am-surface);
+    color: var(--am-text);
+  }
+
+  .dsh-rail__item[aria-current="page"] {
+    background: var(--am-surface-2);
+    color: var(--am-accent);
+  }
+
+  /* Active indicator bar — left edge */
+  .dsh-rail__item[aria-current="page"]::before {
+    content: '';
+    position: absolute;
+    left: -10px;
+    top: 8px;
+    bottom: 8px;
+    width: 2px;
+    background: var(--am-accent);
+    border-radius: 0 2px 2px 0;
+  }
+
+  .dsh-rail__item .am-icon {
+    color: currentColor;
+  }
+
+  .dsh-rail__badge {
+    display: inline-flex;
+    align-items: center;
+    padding: 1px 6px;
+    border-radius: var(--am-radius-pill);
+    font-family: var(--am-font-mono);
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    line-height: 1.4;
+    background: var(--am-warn-tint);
+    color: var(--am-warn);
+  }
+
+  .dsh-rail__badge--ok {
+    background: var(--am-accent-tint);
+    color: var(--am-accent);
+  }
+
+  .dsh-rail__badge--danger {
+    background: var(--am-danger-tint);
+    color: var(--am-danger);
+  }
+
+  .dsh-rail__spacer {
+    flex: 1;
+  }
+
+  .dsh-rail__footer {
+    padding: var(--am-s-3);
+    border-top: 1px solid var(--am-border);
+    margin-top: var(--am-s-3);
+  }
+
+  .dsh-rail__footer-meta {
+    font-family: var(--am-font-mono);
+    font-size: var(--am-fz-xs);
+    color: var(--am-muted-2);
+    line-height: 1.6;
+  }
+
+  .dsh-rail__footer-meta strong {
+    color: var(--am-muted);
+    font-weight: 500;
+  }
+
+  /* Collapsed state: icon-only (applied via media query AND optionally via JS class) */
+  .dsh-rail--collapsed .dsh-rail__brand-name,
+  .dsh-rail--collapsed .dsh-rail__section,
+  .dsh-rail--collapsed .dsh-rail__item span:not(.dsh-rail__badge),
+  .dsh-rail--collapsed .dsh-rail__footer {
+    display: none;
+  }
+
+  .dsh-rail--collapsed .dsh-rail__item {
+    grid-template-columns: 1fr;
+    justify-items: center;
+    padding: 0;
+  }
+
+  .dsh-rail--collapsed .dsh-rail__item .dsh-rail__badge {
+    position: absolute;
+    top: 4px;
+    right: 4px;
+    padding: 0;
+    min-width: 6px;
+    height: 6px;
+    font-size: 0;
+  }
+
+  /* Tablet: auto-collapse via viewport */
+  @media (max-width: 1024px) {
+    .dsh-rail__brand-name,
+    .dsh-rail__section,
+    .dsh-rail__item span:not(.dsh-rail__badge),
+    .dsh-rail__footer {
+      display: none;
+    }
+
+    .dsh-rail__item {
+      grid-template-columns: 1fr;
+      justify-items: center;
+      padding: 0;
+    }
+  }
+</style>

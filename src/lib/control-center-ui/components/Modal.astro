@@ -1,0 +1,238 @@
+---
+/**
+ * Modal — native <dialog> with focus trap
+ *
+ * Usage: render the modal in your page. Open it by calling
+ *   document.getElementById(modalId).showModal()
+ *
+ * Closes on: ESC (native), backdrop click, close button.
+ * Sets `inert` on DashShell content while open (via JS).
+ *
+ * Width sizes:
+ *   sm  → 420px (confirmation dialogs)
+ *   md  → 640px (refresh-credentials, richer forms)
+ *
+ * Slots:
+ *   (default) — modal body content
+ *   "foot"    — footer content (ButtonRow goes here)
+ */
+
+interface Props {
+  /** Unique ID for the <dialog> element. Required. */
+  modalId: string;
+  /** Dialog title shown in header. */
+  title: string;
+  /**
+   * Width size preset.
+   * sm = 420px (confirmations)
+   * md = 640px (richer dialogs)
+   */
+  size?: 'sm' | 'md';
+}
+
+const { modalId, title, size = 'md' } = Astro.props;
+---
+
+<dialog
+  class="dsh-modal"
+  data-size={size}
+  id={modalId}
+  aria-labelledby={`${modalId}-title`}
+>
+  <div class="dsh-modal__head">
+    <h3 class="dsh-modal__title" id={`${modalId}-title`}>{title}</h3>
+    <button
+      class="dsh-modal__close"
+      aria-label="Close"
+      data-modal-close={modalId}
+      type="button"
+    >
+      <svg class="am-icon am-icon--sm" aria-hidden="true">
+        <use href="/agent-ui/icons/sprite.svg#x"></use>
+      </svg>
+    </button>
+  </div>
+
+  <div class="dsh-modal__body">
+    <slot />
+  </div>
+
+  <div class="dsh-modal__foot">
+    <slot name="foot" />
+  </div>
+</dialog>
+
+<!-- Backdrop -->
+<div class="dsh-modal-backdrop" id={`${modalId}-backdrop`} hidden aria-hidden="true"></div>
+
+<style>
+  /* Backdrop overlay */
+  .dsh-modal-backdrop {
+    position: fixed;
+    inset: 0;
+    z-index: 70;
+    background: rgba(0, 0, 0, 0.6);
+    backdrop-filter: blur(4px);
+  }
+
+  .dsh-modal-backdrop[hidden] {
+    display: none;
+  }
+
+  /* Native dialog element */
+  dialog.dsh-modal {
+    position: fixed;
+    inset: 0;
+    margin: auto;
+    width: 100%;
+    max-width: var(--dsh-modal-w-md);
+    max-height: 90vh;
+    background: var(--am-surface);
+    border: 1px solid var(--am-border);
+    border-radius: var(--am-radius);
+    box-shadow: var(--am-shadow-modal);
+    overflow: hidden;
+    padding: 0;
+    z-index: 80;
+    display: flex;
+    flex-direction: column;
+  }
+
+  dialog.dsh-modal[data-size="sm"] {
+    max-width: var(--dsh-modal-w-sm);
+  }
+
+  dialog.dsh-modal:not([open]) {
+    display: none;
+  }
+
+  /* Remove default backdrop — we render our own */
+  dialog.dsh-modal::backdrop {
+    background: transparent;
+  }
+
+  .dsh-modal__head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: var(--am-s-4) var(--am-s-5);
+    border-bottom: 1px solid var(--am-border);
+    flex-shrink: 0;
+  }
+
+  .dsh-modal__title {
+    margin: 0;
+    font-family: var(--am-font-display);
+    font-size: var(--am-fz-lg);
+    font-weight: var(--am-fw-ui);
+    letter-spacing: var(--am-tracking-tight);
+    color: var(--am-text);
+  }
+
+  .dsh-modal__close {
+    background: transparent;
+    border: 0;
+    color: var(--am-muted);
+    cursor: pointer;
+    padding: 4px;
+    border-radius: var(--am-radius-sm);
+    display: grid;
+    place-items: center;
+    transition: background var(--am-dur-fast) var(--am-ease), color var(--am-dur-fast) var(--am-ease);
+  }
+
+  .dsh-modal__close:hover {
+    background: var(--am-surface-2);
+    color: var(--am-text);
+  }
+
+  .dsh-modal__body {
+    padding: var(--am-s-5);
+    color: var(--am-text-2);
+    font-size: var(--am-fz-sm);
+    line-height: 1.6;
+    overflow-y: auto;
+    flex: 1;
+  }
+
+  .dsh-modal__body :global(p) {
+    color: var(--am-muted);
+    margin: 0 0 var(--am-s-3);
+  }
+
+  .dsh-modal__body :global(p:last-child) {
+    margin-bottom: 0;
+  }
+
+  .dsh-modal__foot {
+    padding: var(--am-s-3) var(--am-s-5);
+    border-top: 1px solid var(--am-border);
+    background: var(--am-base-2);
+    flex-shrink: 0;
+  }
+
+  .dsh-modal__foot:empty {
+    display: none;
+  }
+</style>
+
+<script is:inline>
+  (function () {
+    function setupModal(modalId) {
+      const dialog = document.getElementById(modalId);
+      const backdrop = document.getElementById(modalId + '-backdrop');
+      if (!dialog) return;
+
+      function openModal() {
+        dialog.showModal();
+        if (backdrop) backdrop.hidden = false;
+        // Set inert on main content
+        const main = document.getElementById('main-content');
+        if (main) main.inert = true;
+        // Focus first focusable element inside dialog
+        const focusable = dialog.querySelectorAll(
+          'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])'
+        );
+        if (focusable[0]) focusable[0].focus();
+      }
+
+      function closeModal() {
+        dialog.close();
+        if (backdrop) backdrop.hidden = true;
+        const main = document.getElementById('main-content');
+        if (main) main.inert = false;
+        // Return focus to opener if tracked
+        if (dialog._opener) { dialog._opener.focus(); dialog._opener = null; }
+      }
+
+      // Close button inside dialog
+      dialog.querySelectorAll('[data-modal-close]').forEach(btn => {
+        btn.addEventListener('click', closeModal);
+      });
+
+      // Backdrop click closes
+      if (backdrop) {
+        backdrop.addEventListener('click', closeModal);
+      }
+
+      // ESC closes (native dialog handles this, but we still need to clean up backdrop+inert)
+      dialog.addEventListener('cancel', function (e) {
+        e.preventDefault();
+        closeModal();
+      });
+
+      // Any element with data-modal-open=modalId opens this dialog
+      document.querySelectorAll('[data-modal-open="' + modalId + '"]').forEach(btn => {
+        btn.addEventListener('click', function () {
+          dialog._opener = btn;
+          openModal();
+        });
+      });
+    }
+
+    // Setup all modals on page load
+    document.querySelectorAll('dialog.dsh-modal').forEach(el => {
+      if (el.id) setupModal(el.id);
+    });
+  })();
+</script>

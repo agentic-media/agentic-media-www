@@ -1,0 +1,348 @@
+/* ──────────────────────────────────────────────────────────────────
+   control-center/ui — shell.css
+
+   STRUCTURAL CSS ONLY.
+   This file defines --dsh-* layout tokens and the DashShell / AuthShell
+   grid structure. Per-component rules live in each component's <style>
+   block (Astro scopes them automatically).
+
+   Token dependency: all --am-* custom properties come from agent-ui v0.1
+   (brand/tokens.css + components/components.css). This package adds NO
+   new color or type tokens — only structural dimensions under --dsh-*.
+
+   §0  Structural tokens (--dsh-*)
+   §1  DashShell grid layout + responsive behavior
+   §2  AuthShell layout
+   §3  Global shared animations (used across multiple components)
+   §4  Global shared utilities
+   ────────────────────────────────────────────────────────────── */
+
+/* §0 ── Structural tokens ─────────────────────────────────────── */
+:root {
+  --dsh-rail-w:            240px;   /* tab rail width at desktop */
+  --dsh-rail-w-collapsed:   56px;   /* icon-only rail at tablet */
+  --dsh-header-h:           56px;   /* top bar height */
+  --dsh-content-pad:        24px;   /* horizontal content padding */
+  --dsh-content-gap:        20px;   /* gap between widgets in content frame */
+  --dsh-modal-w-sm:        420px;   /* small modal width (confirmations) */
+  --dsh-modal-w-md:        640px;   /* medium modal width (forms) */
+}
+
+/* §1 ── DashShell grid ────────────────────────────────────────── */
+.dsh-shell {
+  display: grid;
+  grid-template-columns: var(--dsh-rail-w) 1fr;
+  grid-template-rows: var(--dsh-header-h) 1fr;
+  grid-template-areas: "rail header" "rail content";
+  min-height: 100vh;
+  background: var(--am-base);
+}
+
+.dsh-shell__rail {
+  grid-area: rail;
+  border-right: 1px solid var(--am-border);
+  background: var(--am-base-2);
+  position: sticky;
+  top: 0;
+  height: 100vh;
+  overflow: hidden auto;
+}
+
+.dsh-shell__header {
+  grid-area: header;
+  position: sticky;
+  top: 0;
+  z-index: 20;
+  background: rgba(11, 12, 14, 0.85);
+  backdrop-filter: blur(8px);
+  border-bottom: 1px solid var(--am-border);
+}
+
+.dsh-shell__content {
+  grid-area: content;
+  min-width: 0;
+  padding: var(--dsh-content-pad);
+  display: flex;
+  flex-direction: column;
+  gap: var(--dsh-content-gap);
+}
+
+/* Passthrough tabs (iframe) remove content padding */
+.dsh-shell--passthrough .dsh-shell__content {
+  padding: 0;
+  gap: 0;
+}
+
+/* Tablet: collapse rail to icon-only width */
+@media (max-width: 1024px) {
+  .dsh-shell {
+    grid-template-columns: var(--dsh-rail-w-collapsed) 1fr;
+  }
+}
+
+/* Mobile: rail becomes a slide-in drawer */
+@media (max-width: 768px) {
+  .dsh-shell {
+    grid-template-columns: 1fr;
+    grid-template-areas: "header" "content";
+  }
+
+  .dsh-shell__rail {
+    position: fixed;
+    top: var(--dsh-header-h);
+    left: 0;
+    bottom: 0;
+    width: 280px;
+    transform: translateX(-100%);
+    transition: transform var(--am-dur-base) var(--am-ease);
+    z-index: 30;
+  }
+
+  .dsh-shell__rail[data-open="true"] {
+    transform: translateX(0);
+  }
+}
+
+/* §2 ── AuthShell layout ──────────────────────────────────────── */
+.dsh-auth {
+  min-height: 100vh;
+  display: grid;
+  grid-template-rows: 1fr auto;
+  background:
+    radial-gradient(ellipse 80% 60% at 50% -10%, rgba(124, 92, 255, 0.08), transparent 60%),
+    radial-gradient(ellipse 60% 50% at 50% 110%, rgba(110, 231, 183, 0.06), transparent 60%),
+    var(--am-base);
+}
+
+.dsh-auth__center {
+  display: grid;
+  place-items: center;
+  padding: var(--am-s-7) var(--am-s-5);
+}
+
+.dsh-auth__footer {
+  text-align: center;
+  padding: var(--am-s-5);
+  font-family: var(--am-font-mono);
+  font-size: var(--am-fz-xs);
+  color: var(--am-muted-2);
+  letter-spacing: var(--am-tracking-wide);
+}
+
+.dsh-auth__footer a {
+  color: var(--am-muted);
+}
+
+.dsh-auth__footer a:hover {
+  color: var(--am-text-2);
+}
+
+/* §3 ── Shared animations ─────────────────────────────────────── */
+@keyframes dsh-eyepulse {
+  0%, 100% { opacity: 1; }
+  50%       { opacity: 0.55; }
+}
+
+@keyframes dsh-skel {
+  0%   { background-position: 200% 0; opacity: 0.45; }
+  50%  { opacity: 0.65; }
+  100% { background-position: -200% 0; opacity: 0.45; }
+}
+
+@keyframes dsh-toast-in {
+  from { transform: translateY(8px); opacity: 0; }
+  to   { transform: translateY(0); opacity: 1; }
+}
+
+/* Honor reduced-motion for all animations */
+@media (prefers-reduced-motion: reduce) {
+  .dsh-shell__rail {
+    transition: none;
+  }
+}
+
+/* §4 ── Global shared utilities ───────────────────────────────── */
+
+/* Page-level head strip (title left + action right) */
+.dsh-page-head {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: var(--am-s-4);
+  padding-bottom: var(--am-s-2);
+}
+
+.dsh-page-head h1,
+.dsh-page-head h2 {
+  margin: 0;
+}
+
+/* Greeting strip above KPI row */
+.dsh-greet {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--am-s-3);
+  font-size: var(--am-fz-sm);
+  color: var(--am-muted);
+}
+
+.dsh-greet__hello {
+  color: var(--am-text-2);
+}
+
+.dsh-greet__hello strong {
+  color: var(--am-text);
+  font-weight: var(--am-fw-medium);
+  font-family: var(--am-font-mono);
+  font-size: 13px;
+}
+
+/* Focus ring — global default for all interactive elements */
+:focus-visible {
+  outline: 2px solid var(--am-accent);
+  outline-offset: 2px;
+  border-radius: 2px;
+}
+
+/* Custom scrollbar — used by log body and scrollable containers */
+.dsh-scroll::-webkit-scrollbar,
+.dsh-log__body::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+.dsh-scroll::-webkit-scrollbar-thumb,
+.dsh-log__body::-webkit-scrollbar-thumb {
+  background: var(--am-border-2);
+  border-radius: 4px;
+}
+
+.dsh-scroll::-webkit-scrollbar-track,
+.dsh-log__body::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+/* ──────────────────────────────────────────────────────────────────
+   AppShell — public site layout
+   Third shell after DashShell + AuthShell. Used by commons-app and
+   any future public-facing surface (agenticmedia.cc article reader,
+   beta-invite landing, etc).
+
+   Header strip + main slot + footer. Uses fluid spacing so the
+   header tightens on mobile without media queries.
+   ────────────────────────────────────────────────────────────── */
+
+.app-shell {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  background: var(--am-base);
+  color: var(--am-text);
+  font-family: var(--am-font);
+}
+
+.app-shell__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--am-fluid-space-md);
+  padding: var(--am-fluid-space-sm) var(--am-fluid-space-lg);
+  border-bottom: 1px solid var(--am-border);
+  background: var(--am-base-2);
+  position: sticky;
+  top: 0;
+  z-index: 10;
+}
+
+.app-shell__brand {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--am-fluid-space-sm);
+  color: var(--am-text);
+  text-decoration: none;
+  font-family: var(--am-font-display);
+  font-weight: var(--am-fw-display, 600);
+  font-size: var(--am-fluid-text-lg);
+  letter-spacing: var(--am-tracking-tight, -0.01em);
+}
+
+.app-shell__brand-mark {
+  color: var(--am-accent);
+  display: block;
+}
+
+.app-shell--commons .app-shell__brand-mark {
+  color: var(--am-iris);
+}
+
+.app-shell__wordmark-faded {
+  opacity: 0.55;
+}
+
+.app-shell__nav {
+  display: flex;
+  align-items: center;
+  gap: var(--am-fluid-space-md);
+  font-size: var(--am-fluid-text-sm);
+}
+
+.app-shell__nav-link {
+  color: var(--am-text-2);
+  text-decoration: none;
+  padding: 6px 10px;
+  border-radius: var(--am-radius, 8px);
+  transition: color 120ms cubic-bezier(0.2, 0, 0, 1),
+              background 120ms cubic-bezier(0.2, 0, 0, 1);
+}
+
+.app-shell__nav-link:hover,
+.app-shell__nav-link:focus-visible {
+  color: var(--am-text);
+  background: var(--am-surface);
+}
+
+.app-shell__user {
+  color: var(--am-muted);
+  font-family: var(--am-font-mono);
+  font-size: var(--am-fluid-text-xs);
+}
+
+.app-shell__logout {
+  display: inline-flex;
+}
+
+.app-shell__main {
+  flex: 1;
+  width: 100%;
+  margin-inline: auto;
+  padding: var(--am-fluid-space-lg) var(--am-fluid-space-md);
+  max-width: var(--am-content-wide);
+}
+
+.app-shell__footer {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: var(--am-fluid-space-xs);
+  padding: var(--am-fluid-space-md) var(--am-fluid-space-lg);
+  border-top: 1px solid var(--am-border);
+  color: var(--am-muted-2);
+  font-size: var(--am-fluid-text-xs);
+}
+
+.app-shell__footer a {
+  color: var(--am-muted);
+}
+
+.app-shell__footer-dot {
+  opacity: 0.6;
+}
+
+/* Tighten the header on very narrow screens without a media query:
+   the brand text drops to "agentic·" and the nav stacks. The header
+   stays one row but condenses, courtesy of flex-wrap inside .app-shell__nav. */
+@container (max-width: 28rem) {
+  .app-shell__wordmark-faded { display: none; }
+}

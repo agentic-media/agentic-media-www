@@ -1,0 +1,80 @@
+---
+/**
+ * EmptyState — centered placeholder for empty data states
+ *
+ * Icon + title + sub-text + optional CTA.
+ * Uses aria-live="polite" so screen readers announce the transition
+ * from loading to empty.
+ */
+
+interface Props {
+  /** Sprite icon name, e.g. 'bot', 'inbox', 'folder'. */
+  icon?: string;
+  /** Primary message, e.g. 'No agents registered yet'. */
+  title: string;
+  /** Secondary description. */
+  sub?: string;
+  /** Optional CTA label. When provided, renders a slot for the CTA button. */
+  cta?: string;
+}
+
+const { icon, title, sub, cta } = Astro.props;
+---
+
+<div class="dsh-empty" aria-live="polite">
+  {icon && (
+    <div class="dsh-empty__icon">
+      <svg class="am-icon am-icon--lg" aria-hidden="true">
+        <use href={`/agent-ui/icons/sprite.svg#${icon}`}></use>
+      </svg>
+    </div>
+  )}
+  <div class="dsh-empty__title">{title}</div>
+  {sub && <div class="dsh-empty__sub">{sub}</div>}
+  {cta && (
+    <div class="dsh-empty__cta">
+      <slot name="cta" />
+    </div>
+  )}
+</div>
+
+<style>
+  .dsh-empty {
+    text-align: center;
+    padding: var(--am-s-7) var(--am-s-5);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: var(--am-s-2);
+  }
+
+  .dsh-empty__icon {
+    width: 44px;
+    height: 44px;
+    border: 1px solid var(--am-border);
+    border-radius: var(--am-radius);
+    display: grid;
+    place-items: center;
+    color: var(--am-muted);
+    background: var(--am-base);
+    margin-bottom: var(--am-s-2);
+  }
+
+  .dsh-empty__title {
+    font-family: var(--am-font-display);
+    font-size: var(--am-fz-md);
+    font-weight: var(--am-fw-ui);
+    color: var(--am-text);
+  }
+
+  .dsh-empty__sub {
+    font-size: var(--am-fz-sm);
+    color: var(--am-muted);
+    max-width: 36ch;
+    line-height: 1.5;
+  }
+
+  .dsh-empty__cta {
+    margin-top: var(--am-s-3);
+  }
+</style>

@@ -1,0 +1,46 @@
+---
+/**
+ * ButtonRow — horizontal row of am-btn elements
+ *
+ * Default alignment: end (right-justified).
+ * Wraps on narrow viewports.
+ *
+ * Usage: place am-btn elements in the default slot.
+ *
+ *   <ButtonRow>
+ *     <button class="am-btn am-btn--ghost">Cancel</button>
+ *     <button class="am-btn am-btn--danger">Restart</button>
+ *   </ButtonRow>
+ */
+
+type Align = 'end' | 'start' | 'split';
+
+interface Props {
+  /**
+   * Alignment of buttons within the row.
+   * end   = flex-end (right-aligned, default)
+   * start = flex-start (left-aligned)
+   * split = space-between
+   */
+  align?: Align;
+}
+
+const { align = 'end' } = Astro.props;
+---
+
+<div class:list={['dsh-btnrow', `dsh-btnrow--${align}`]}>
+  <slot />
+</div>
+
+<style>
+  .dsh-btnrow {
+    display: flex;
+    align-items: center;
+    gap: var(--am-s-2);
+    flex-wrap: wrap;
+  }
+
+  .dsh-btnrow--end   { justify-content: flex-end; }
+  .dsh-btnrow--start { justify-content: flex-start; }
+  .dsh-btnrow--split { justify-content: space-between; }
+</style>
