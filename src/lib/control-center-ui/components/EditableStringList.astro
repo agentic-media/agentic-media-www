@@ -1,0 +1,376 @@
+---
+/**
+ * EditableStringList — reusable row-add-remove primitive for string lists.
+ *
+ * Emits hidden inputs named `{name}[]` (or just `{name}` repeated) on
+ * submit so the parent form's POST receives them as an array.
+ *
+ * Props:
+ *   items          — current list of strings
+ *   name           — form field name (hidden inputs will carry this name)
+ *   addPlaceholder — placeholder text for the add-row input
+ *   validate       — optional fn; returns an error string or null
+ *   normalize      — optional fn; trims/transforms before storing
+ *   display        — optional fn; transforms stored value for visible label
+ *
+ * htmx-friendly: the component renders server-side; inline JS wires
+ * add/remove without any framework. After htmx swaps in a new fragment
+ * the script re-initialises because it runs on DOMContentLoaded *or*
+ * on htmx:afterSwap (see the script section).
+ *
+ * Styles use --am-* tokens exclusively; no hardcoded colors.
+ */
+
+interface Props {
+  items: string[];
+  name: string;
+  addPlaceholder?: string;
+  validate?: (v: string) => string | null;
+  normalize?: (v: string) => string;
+  display?: (v: string) => string;
+  /** Optional label for the section, shown above the list. */
+  label?: string;
+  /** Optional hint shown beneath the label. */
+  hint?: string;
+  /** When true, the list is shown but add/remove are disabled. */
+  readOnly?: boolean;
+}
+
+const {
+  items = [],
+  name,
+  addPlaceholder = 'add entry…',
+  label,
+  hint,
+  readOnly = false,
+} = Astro.props;
+
+// Unique DOM ID so multiple instances on one page don't collide.
+const uid = `esl-${name}-${Math.random().toString(36).slice(2, 7)}`;
+---
+
+<div class="esl" id={uid} data-name={name} data-readonly={readOnly ? 'true' : 'false'}>
+  {label && (
+    <div class="esl__head">
+      <span class="esl__label">{label}</span>
+      {hint && <span class="esl__hint">{hint}</span>}
+    </div>
+  )}
+
+  <ul class="esl__list" id={`${uid}-list`}>
+    {items.map((v) => (
+      <li class="esl__row">
+        <span class="esl__value">{v}</span>
+        {!readOnly && (
+          <button
+            type="button"
+            class="esl__remove"
+            aria-label={`remove ${v}`}
+          >remove</button>
+        )}
+        <input type="hidden" name={name} value={v} />
+      </li>
+    ))}
+  </ul>
+
+  {!readOnly && (
+    <div class="esl__add-row" id={`${uid}-add`}>
+      <input
+        class="esl__input"
+        type="text"
+        placeholder={addPlaceholder}
+        aria-label={label ? `add ${label} entry` : 'add entry'}
+        autocomplete="off"
+        autocorrect="off"
+        autocapitalize="off"
+        spellcheck="false"
+      />
+      <button type="button" class="esl__add-btn" aria-label="add">add</button>
+    </div>
+  )}
+
+  <span class="esl__dirty-hint" aria-live="polite" hidden>unsaved changes</span>
+</div>
+
+<style>
+  .esl {
+    display: flex;
+    flex-direction: column;
+    gap: var(--am-s-2);
+  }
+
+  .esl__head {
+    display: flex;
+    align-items: baseline;
+    gap: var(--am-s-3);
+    flex-wrap: wrap;
+  }
+
+  .esl__label {
+    font-family: var(--am-font-display);
+    font-size: var(--am-fz-sm);
+    font-weight: var(--am-fw-ui);
+    color: var(--am-text);
+    text-transform: lowercase;
+  }
+
+  .esl__hint {
+    font-size: var(--am-fz-xs);
+    color: var(--am-muted-2);
+  }
+
+  .esl__list {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    gap: var(--am-s-1);
+  }
+
+  .esl__list:empty::before {
+    content: 'no entries';
+    font-size: var(--am-fz-xs);
+    color: var(--am-muted-2);
+    font-style: italic;
+    padding: var(--am-s-2) 0;
+    display: block;
+  }
+
+  .esl__row {
+    display: flex;
+    align-items: center;
+    gap: var(--am-s-2);
+    padding: 6px var(--am-s-3);
+    background: var(--am-base-2);
+    border: 1px solid var(--am-border);
+    border-radius: var(--am-radius-sm);
+    min-height: 36px;
+  }
+
+  .esl__value {
+    flex: 1;
+    font-family: var(--am-font-mono);
+    font-size: var(--am-fz-xs);
+    color: var(--am-text-2);
+    word-break: break-all;
+  }
+
+  .esl__remove {
+    flex-shrink: 0;
+    padding: 0 var(--am-s-2);
+    height: 26px;
+    font-size: var(--am-fz-xs);
+    font-family: var(--am-font);
+    color: var(--am-muted);
+    background: transparent;
+    border: 1px solid var(--am-border);
+    border-radius: var(--am-radius-sm);
+    cursor: pointer;
+    transition:
+      color var(--am-dur-fast) var(--am-ease),
+      border-color var(--am-dur-fast) var(--am-ease),
+      background var(--am-dur-fast) var(--am-ease);
+  }
+
+  .esl__remove:hover {
+    color: var(--am-danger);
+    border-color: color-mix(in srgb, var(--am-danger) 40%, transparent);
+    background: var(--am-danger-tint);
+  }
+
+  .esl__add-row {
+    display: flex;
+    gap: var(--am-s-2);
+    align-items: center;
+  }
+
+  .esl__input {
+    flex: 1;
+    min-width: 0;
+    padding: 7px 10px;
+    background: var(--am-base-2);
+    border: 1px solid var(--am-border);
+    border-radius: var(--am-radius-sm);
+    color: var(--am-text);
+    font: inherit;
+    font-size: var(--am-fz-sm);
+    font-family: var(--am-font-mono);
+    height: 34px;
+    transition: border-color var(--am-dur-fast) var(--am-ease);
+  }
+
+  .esl__input:focus {
+    outline: none;
+    border-color: var(--am-accent);
+  }
+
+  .esl__input.is-invalid {
+    border-color: var(--am-danger);
+  }
+
+  .esl__input.is-invalid:focus {
+    box-shadow: 0 0 0 3px color-mix(in srgb, var(--am-danger) 15%, transparent);
+  }
+
+  .esl__add-btn {
+    flex-shrink: 0;
+    padding: 0 var(--am-s-3);
+    height: 34px;
+    font-size: var(--am-fz-sm);
+    font-family: var(--am-font);
+    color: var(--am-text-2);
+    background: var(--am-base-2);
+    border: 1px solid var(--am-border);
+    border-radius: var(--am-radius-sm);
+    cursor: pointer;
+    transition:
+      border-color var(--am-dur-fast) var(--am-ease),
+      background var(--am-dur-fast) var(--am-ease);
+  }
+
+  .esl__add-btn:hover {
+    border-color: var(--am-accent);
+    background: var(--am-accent-tint);
+    color: var(--am-accent);
+  }
+
+  .esl__validation-msg {
+    font-size: var(--am-fz-xs);
+    color: var(--am-danger);
+    display: block;
+    margin-top: 2px;
+  }
+
+  .esl__dirty-hint {
+    font-size: var(--am-fz-xs);
+    color: var(--am-warn);
+    font-weight: var(--am-fw-ui);
+  }
+</style>
+
+<script is:inline>
+(function () {
+  /**
+   * Initialise one EditableStringList instance.
+   * Called on first paint and after htmx:afterSwap for re-initialisation.
+   */
+  function initEsl(root) {
+    if (root._eslInit) return; // already wired
+    root._eslInit = true;
+
+    const name = root.dataset.name;
+    const listEl = root.querySelector('.esl__list');
+    const addRow = root.querySelector('.esl__add-row');
+    const dirtyHint = root.querySelector('.esl__dirty-hint');
+
+    if (!listEl || !addRow) return; // read-only mode has no addRow
+
+    const inputEl = addRow.querySelector('.esl__input');
+    const addBtn  = addRow.querySelector('.esl__add-btn');
+
+    function markDirty() {
+      if (dirtyHint) dirtyHint.hidden = false;
+      // Set data-dirty on closest form for DirtyStateSaveBar.
+      const form = root.closest('form');
+      if (form) form.dataset.dirty = 'true';
+    }
+
+    function clearValidation() {
+      inputEl.classList.remove('is-invalid');
+      const prev = addRow.nextElementSibling;
+      if (prev && prev.classList.contains('esl__validation-msg')) prev.remove();
+    }
+
+    function showValidation(msg) {
+      inputEl.classList.add('is-invalid');
+      clearValidation();
+      inputEl.classList.add('is-invalid');
+      const span = document.createElement('span');
+      span.className = 'esl__validation-msg';
+      span.textContent = msg;
+      addRow.insertAdjacentElement('afterend', span);
+    }
+
+    function getExisting() {
+      return Array.from(listEl.querySelectorAll('input[type="hidden"]')).map(function (i) { return i.value; });
+    }
+
+    function addItem() {
+      clearValidation();
+      var raw = inputEl.value;
+      var v = raw.trim();
+      if (!v) {
+        showValidation('value cannot be empty');
+        inputEl.focus();
+        return;
+      }
+
+      // Duplicate check
+      if (getExisting().includes(v)) {
+        showValidation('already in list');
+        inputEl.focus();
+        return;
+      }
+
+      // Build row
+      var li = document.createElement('li');
+      li.className = 'esl__row';
+
+      var span = document.createElement('span');
+      span.className = 'esl__value';
+      span.textContent = v;
+
+      var removeBtn = document.createElement('button');
+      removeBtn.type = 'button';
+      removeBtn.className = 'esl__remove';
+      removeBtn.setAttribute('aria-label', 'remove ' + v);
+      removeBtn.textContent = 'remove';
+
+      var hidden = document.createElement('input');
+      hidden.type = 'hidden';
+      hidden.name = name;
+      hidden.value = v;
+
+      li.append(span, removeBtn, hidden);
+      listEl.appendChild(li);
+
+      inputEl.value = '';
+      inputEl.focus();
+      markDirty();
+    }
+
+    addBtn.addEventListener('click', addItem);
+
+    inputEl.addEventListener('keydown', function (e) {
+      if (e.key === 'Enter') {
+        e.preventDefault();
+        addItem();
+      }
+    });
+
+    // Remove delegation
+    listEl.addEventListener('click', function (e) {
+      var btn = e.target.closest('.esl__remove');
+      if (!btn) return;
+      var row = btn.closest('.esl__row');
+      if (row) {
+        row.remove();
+        markDirty();
+      }
+    });
+  }
+
+  function initAll() {
+    document.querySelectorAll('.esl').forEach(function (el) {
+      initEsl(el);
+    });
+  }
+
+  // Initial paint
+  initAll();
+
+  // Re-init after htmx swaps
+  document.addEventListener('htmx:afterSwap', initAll);
+})();
+</script>

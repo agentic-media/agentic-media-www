@@ -1,0 +1,168 @@
+---
+/**
+ * CodeBlock — monospace code block with optional copy button
+ *
+ * Usage:
+ *   <CodeBlock lang="bash" label="bootstrap.sh">
+ *     curl -fsSL https://example.com | sh
+ *   </CodeBlock>
+ *
+ * The copy button reads textContent from the <pre> element.
+ * For streaming content (e.g. refresh-credentials modal), pass `live`
+ * to show a "live" indicator instead of the copy button.
+ */
+
+interface Props {
+  /** Optional header label, e.g. 'bash · bootstrap.sh'. */
+  label?: string;
+  /** Show the copy button (default true). */
+  copyable?: boolean;
+  /** When true, show a "live" indicator instead of copy button. */
+  live?: boolean;
+  /**
+   * Unique ID for the copy button's aria-controls.
+   * Auto-generated if not provided.
+   */
+  blockId?: string;
+  /**
+   * When true, wrap long lines (use for inline/flowing code blocks).
+   * Default wraps at container boundary; false = horizontal scroll.
+   */
+  wrap?: boolean;
+}
+
+const {
+  label,
+  copyable = true,
+  live = false,
+  blockId = `code-${Math.random().toString(36).slice(2, 8)}`,
+  wrap = false,
+} = Astro.props;
+---
+
+<div class:list={['dsh-code', wrap && 'dsh-code--inline']} id={blockId}>
+  {(label || copyable || live) && (
+    <div class="dsh-code__head">
+      <span>{label ?? ''}</span>
+      {live ? (
+        <span class="dsh-code__live">live</span>
+      ) : copyable ? (
+        <button
+          class="dsh-code__copy"
+          type="button"
+          data-copied="false"
+          data-target={blockId}
+          aria-label="Copy code"
+        >
+          <svg class="am-icon am-icon--sm" aria-hidden="true">
+            <use href="/agent-ui/icons/sprite.svg#copy"></use>
+          </svg>
+          copy
+        </button>
+      ) : null}
+    </div>
+  )}
+  <pre><slot /></pre>
+</div>
+
+<style>
+  .dsh-code {
+    position: relative;
+    border: 1px solid var(--am-border);
+    background: var(--am-base);
+    border-radius: var(--am-radius-sm);
+    font-family: var(--am-font-mono);
+    font-size: 12px;
+    line-height: 1.6;
+    color: var(--am-text-2);
+    overflow: hidden;
+  }
+
+  .dsh-code__head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 6px 10px;
+    border-bottom: 1px solid var(--am-border);
+    background: var(--am-base-2);
+    font-size: 10px;
+    letter-spacing: var(--am-tracking-wide);
+    text-transform: uppercase;
+    color: var(--am-muted);
+    font-weight: 700;
+  }
+
+  .dsh-code__live {
+    color: var(--am-accent);
+    font-family: var(--am-font-mono);
+    font-size: 10px;
+    letter-spacing: var(--am-tracking-wide);
+    text-transform: uppercase;
+  }
+
+  .dsh-code__copy {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 2px 6px;
+    border-radius: 4px;
+    background: transparent;
+    border: 0;
+    color: var(--am-muted);
+    font-family: var(--am-font-mono);
+    font-size: 10px;
+    letter-spacing: var(--am-tracking-wide);
+    text-transform: uppercase;
+    cursor: pointer;
+    transition:
+      color var(--am-dur-fast) var(--am-ease),
+      background var(--am-dur-fast) var(--am-ease);
+  }
+
+  .dsh-code__copy:hover {
+    color: var(--am-text);
+    background: var(--am-surface);
+  }
+
+  .dsh-code__copy[data-copied="true"] {
+    color: var(--am-accent);
+  }
+
+  .dsh-code pre {
+    margin: 0;
+    padding: 10px 12px;
+    white-space: pre;
+    overflow-x: auto;
+  }
+
+  .dsh-code--inline pre {
+    white-space: pre-wrap;
+    word-break: break-all;
+  }
+</style>
+
+<script is:inline>
+  document.querySelectorAll('.dsh-code__copy').forEach(btn => {
+    btn.addEventListener('click', async () => {
+      const blockId = btn.dataset.target;
+      const block = blockId ? document.getElementById(blockId) : btn.closest('.dsh-code');
+      const pre = block?.querySelector('pre');
+      if (!pre) return;
+
+      try {
+        await navigator.clipboard.writeText(pre.textContent ?? '');
+        btn.dataset.copied = 'true';
+        const icon = btn.querySelector('use');
+        if (icon) icon.setAttribute('href', '/agent-ui/icons/sprite.svg#check');
+        btn.lastChild.textContent = ' copied';
+        setTimeout(() => {
+          btn.dataset.copied = 'false';
+          if (icon) icon.setAttribute('href', '/agent-ui/icons/sprite.svg#copy');
+          btn.lastChild.textContent = ' copy';
+        }, 2000);
+      } catch {
+        // Clipboard not available
+      }
+    });
+  });
+</script>

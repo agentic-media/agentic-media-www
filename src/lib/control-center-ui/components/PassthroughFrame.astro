@@ -1,0 +1,147 @@
+---
+/**
+ * PassthroughFrame — full-bleed iframe embed
+ *
+ * Used for filebrowser and browser (noVNC) tabs.
+ * Height: calc(100vh - var(--dsh-header-h)) — fills the content area.
+ * No chrome added inside the frame.
+ *
+ * On iframe load error, renders an ErrorWidget (danger tone) in place of the frame.
+ * The error widget is hidden until iframe.onerror fires.
+ *
+ * Props:
+ *   src          — iframe URL (required)
+ *   title        — accessible title for the iframe (required)
+ *   errorTitle   — title for the error widget (optional)
+ *   errorMessage — body for the error widget (optional)
+ */
+import ErrorWidget from './ErrorWidget.astro';
+
+interface Props {
+  /** iframe src URL. */
+  src: string;
+  /** Accessible title for the <iframe>. Required for a11y. */
+  title: string;
+  /** Error widget title if iframe fails to load. */
+  errorTitle?: string;
+  /** Error widget message body. */
+  errorMessage?: string;
+  /** Unique frame ID for JS wiring. */
+  frameId?: string;
+}
+
+const {
+  src,
+  title,
+  errorTitle = 'Service unreachable',
+  errorMessage = 'The service could not be reached. Check that the container is running.',
+  frameId = `frame-${Math.random().toString(36).slice(2, 8)}`,
+} = Astro.props;
+---
+
+<div class="dsh-frame-shell" id={`${frameId}-shell`}>
+  <!-- iframe (hidden once error fires) -->
+  <iframe
+    id={frameId}
+    class="dsh-frame"
+    src={src}
+    title={title}
+    loading="lazy"
+    referrerpolicy="no-referrer"
+  ></iframe>
+
+  <!-- Error overlay — hidden by default, shown on iframe load failure -->
+  <div
+    class="dsh-frame-shell__error"
+    id={`${frameId}-error`}
+    hidden
+  >
+    <ErrorWidget
+      tone="danger"
+      title={errorTitle}
+      message={errorMessage}
+    >
+      <button
+        slot="action"
+        class="am-btn am-btn--secondary am-btn--sm"
+        type="button"
+        id={`${frameId}-retry`}
+      >
+        <svg class="am-icon am-icon--sm" aria-hidden="true">
+          <use href="/agent-ui/icons/sprite.svg#refresh"></use>
+        </svg>
+        Retry
+      </button>
+    </ErrorWidget>
+  </div>
+</div>
+
+<style>
+  .dsh-frame-shell {
+    position: relative;
+    width: 100%;
+    height: calc(100vh - var(--dsh-header-h));
+    background: var(--am-base);
+    overflow: hidden;
+  }
+
+  .dsh-frame {
+    width: 100%;
+    height: 100%;
+    border: 0;
+    display: block;
+    background: var(--am-base);
+  }
+
+  .dsh-frame-shell__error {
+    position: absolute;
+    inset: 0;
+    display: grid;
+    place-items: center;
+    padding: var(--am-s-5);
+    background: var(--am-base);
+  }
+
+  .dsh-frame-shell__error[hidden] {
+    display: none;
+  }
+
+  .dsh-frame-shell__error :global(.dsh-error) {
+    max-width: 540px;
+    width: 100%;
+  }
+</style>
+
+<script is:inline>
+  (function () {
+    const frameIdAttr = document.currentScript?.previousElementSibling?.id;
+    // Walk up to find the shell, then locate the frame by its shell id
+    // We use a data attribute set during render for reliable lookup
+  })();
+
+  // Wire up each passthrough frame on the page
+  document.addEventListener('DOMContentLoaded', function () {
+    document.querySelectorAll('.dsh-frame').forEach(function (iframe) {
+      const id = iframe.id;
+      if (!id) return;
+      const errorEl = document.getElementById(id + '-error');
+      const retryBtn = document.getElementById(id + '-retry');
+
+      iframe.addEventListener('error', function () {
+        if (errorEl) errorEl.hidden = false;
+        iframe.style.display = 'none';
+      });
+
+      if (retryBtn) {
+        retryBtn.addEventListener('click', function () {
+          iframe.style.display = 'block';
+          if (errorEl) errorEl.hidden = true;
+          // Reload iframe by reassigning src
+          const src = iframe.src;
+          iframe.src = '';
+          iframe.src = src;
+        });
+      }
+    });
+  });
+</script>

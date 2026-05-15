@@ -1,0 +1,152 @@
+---
+/**
+ * AppShell — public site shell.
+ *
+ * The third (and last) layout in control-center/ui:
+ *   DashShell  → authenticated operator surfaces (rail + header)
+ *   AuthShell  → pre-auth (sign-in, permission denied)
+ *   AppShell   → public/site surfaces (commons-app reader UI, agenticmedia.cc-style pages)
+ *
+ * Single header strip + main slot + footer. Wires the same agent-ui
+ * tokens, fluid scale, and vendored htmx as DashShell so the structure
+ * documentation in conventions/astro-htmx.md applies uniformly.
+ *
+ * The header morphs based on `user` — anonymous shows "sign in",
+ * authenticated shows the dashboard / settings links and logout form.
+ */
+
+import Toast from '../components/Toast.astro';
+
+interface Props {
+  /** Page <title>. */
+  pageTitle?: string;
+  /** Authenticated user (null when anonymous). */
+  user?: { gh_login: string; gh_avatar_url?: string } | null;
+  /** Brand strip variant. 'commons' shows the commons crest accent. */
+  brand?: 'agenticmedia' | 'commons';
+  /** Hide the footer (used by full-bleed marketing pages). */
+  bareFooter?: boolean;
+  /**
+   * Extra <head> content injected before </head>.
+   * Use for per-page <meta name="description">, Open Graph tags, canonical
+   * links, and other SEO markup that varies per route. Pass as a Astro
+   * Fragment or raw HTML string via the named "head" slot.
+   *
+   * Usage in a consumer layout:
+   *   <AppShell pageTitle="..." slot:head>
+   *     <meta slot="head" name="description" content="..." />
+   *     <meta slot="head" property="og:title" content="..." />
+   *   </AppShell>
+   *
+   * This prop is intentionally left untyped (any) so consumers can pass
+   * arbitrary slot content without TypeScript friction.
+   */
+  // NOTE: extraHead is a named slot, not a prop — declared here for docs only.
+}
+
+const {
+  pageTitle = 'agentic·media',
+  user = null,
+  brand = 'agenticmedia',
+  bareFooter = false,
+} = Astro.props;
+---
+
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>{pageTitle}</title>
+    <link rel="stylesheet" href="/agent-ui/brand/tokens.css" />
+    <link rel="stylesheet" href="/agent-ui/brand/fluid.css" />
+    <link rel="stylesheet" href="/agent-ui/components/components.css" />
+    <link rel="stylesheet" href="/ui/styles/shell.css" />
+    <link
+      rel="icon"
+      type="image/svg+xml"
+      href="/agent-ui/assets/marks/agenticmedia-mark.svg"
+    />
+    <!-- Bundled htmx + sse extension. See DashShell for rationale. -->
+    <script is:inline src="/agent-ui/vendor/htmx-bundle.min.js" defer></script>
+    <!-- Consumer-supplied head content: SEO meta, OG tags, canonical links. -->
+    <slot name="head" />
+  </head>
+  <body
+    class:list={['app-shell', `app-shell--${brand}`]}
+    hx-headers='{"X-Requested-With":"htmx"}'
+  >
+    <header class="app-shell__header">
+      <a class="app-shell__brand" href="/" aria-label="agenticmedia">
+        <img
+          class="app-shell__brand-mark"
+          src={brand === 'commons'
+            ? '/agent-ui/assets/marks/commons-crest.svg'
+            : '/agent-ui/assets/marks/agenticmedia-mark.svg'}
+          width="28"
+          height="28"
+          alt=""
+          aria-hidden="true"
+        />
+        <span class="app-shell__wordmark">
+          agentic<span class="app-shell__wordmark-faded">media</span>
+        </span>
+      </a>
+
+      <nav class="app-shell__nav" aria-label="account">
+        {user ? (
+          <>
+            <a class="app-shell__nav-link" href="/dashboard">dashboard</a>
+            <a class="app-shell__nav-link" href="/settings">settings</a>
+            <span class="app-shell__user" title={user.gh_login}>@{user.gh_login}</span>
+            <form method="post" action="/logout" class="app-shell__logout">
+              <button type="submit" class="am-btn am-btn--ghost am-btn--sm">logout</button>
+            </form>
+          </>
+        ) : (
+          <a class="am-btn am-btn--ghost am-btn--sm" href="/login">sign in</a>
+        )}
+      </nav>
+    </header>
+
+    <main class="app-shell__main"><slot /></main>
+
+    {!bareFooter && (
+      <footer class="app-shell__footer">
+        <span>agentic media</span>
+        {brand === 'commons' && (
+          <>
+            <span class="app-shell__footer-dot">·</span>
+            <span>commons</span>
+          </>
+        )}
+        <span class="app-shell__footer-dot">·</span>
+        <a href="https://agenticmedia.cc">agenticmedia.cc</a>
+      </footer>
+    )}
+
+    <!-- Toast host — single instance, mounted once in shell -->
+    <Toast />
+  </body>
+</html>
+
+<script is:inline>
+  // Same htmx error/SSE defaults as DashShell — keeps the three shells
+  // behaviourally identical from a developer's point of view.
+  document.body.addEventListener('htmx:responseError', (e) => {
+    const xhr = (e.detail && e.detail.xhr) || {};
+    const trig = xhr.getResponseHeader && xhr.getResponseHeader('HX-Trigger');
+    if (trig && /dashToast/.test(trig)) return;
+    if (window.dashToast) {
+      window.dashToast({
+        message: 'request failed (' + (xhr.status || '?') + ')',
+        tone: 'danger',
+      });
+    }
+  });
+  document.body.addEventListener('htmx:sseError', () => {
+    if (window.dashToast) {
+      window.dashToast({ message: 'live stream disconnected', tone: 'warn' });
+    }
+  });
+</script>

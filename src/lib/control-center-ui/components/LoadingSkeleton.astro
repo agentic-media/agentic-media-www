@@ -1,0 +1,104 @@
+---
+/**
+ * LoadingSkeleton — opacity-pulse placeholder
+ *
+ * Two variants:
+ *   block  — rectangular placeholder (default height 80px)
+ *   row    — horizontal strip of inline skeletons at given sizes
+ *
+ * Size hints for row segments: xs (32px), sm (64px), md (120px), lg (200px), xl (320px).
+ * Animation respects prefers-reduced-motion.
+ *
+ * For table skeleton states, use DataTable with state="loading".
+ */
+
+type SizeHint = 'xs' | 'sm' | 'md' | 'lg' | 'xl' | 'full';
+type Variant  = 'block' | 'row' | 'inline';
+
+interface Props {
+  /** Visual variant. Default 'block'. */
+  variant?: Variant;
+  /** For 'block': pixel height, e.g. '80px'. */
+  height?: string;
+  /** For 'row': array of size hints for each segment. */
+  sizes?: SizeHint[];
+  /** ARIA label for the skeleton group. */
+  ariaLabel?: string;
+}
+
+const {
+  variant = 'block',
+  height = '80px',
+  sizes = ['xs', 'md', 'sm', 'lg'],
+  ariaLabel = 'Loading',
+} = Astro.props;
+---
+
+{variant === 'block' && (
+  <div
+    class="dsh-skel dsh-skel--block"
+    style={`height:${height}`}
+    role="status"
+    aria-label={ariaLabel}
+  ></div>
+)}
+
+{variant === 'row' && (
+  <div class="dsh-skel-row" role="status" aria-label={ariaLabel}>
+    {sizes.map(size => (
+      <span class:list={['dsh-skel', size !== 'full' && `dsh-skel--${size}`]}></span>
+    ))}
+  </div>
+)}
+
+{variant === 'inline' && (
+  <span
+    class="dsh-skel dsh-skel--md"
+    role="status"
+    aria-label={ariaLabel}
+  ></span>
+)}
+
+<style>
+  .dsh-skel {
+    display: inline-block;
+    background: linear-gradient(
+      90deg,
+      var(--am-surface-2),
+      var(--am-surface-3),
+      var(--am-surface-2)
+    );
+    background-size: 200% 100%;
+    border-radius: 4px;
+    animation: dsh-skel 1.4s ease infinite;
+    height: 14px;
+    width: 100%;
+  }
+
+  /* Size hints */
+  .dsh-skel--xs  { width: 32px; }
+  .dsh-skel--sm  { width: 64px; }
+  .dsh-skel--md  { width: 120px; }
+  .dsh-skel--lg  { width: 200px; }
+  .dsh-skel--xl  { width: 320px; }
+
+  .dsh-skel--block {
+    display: block;
+    height: 80px;
+    border-radius: var(--am-radius-sm);
+  }
+
+  .dsh-skel-row {
+    display: flex;
+    gap: 12px;
+    align-items: center;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .dsh-skel {
+      animation: none;
+      opacity: 0.45;
+      background: var(--am-surface-2);
+    }
+  }
+</style>

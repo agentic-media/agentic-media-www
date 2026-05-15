@@ -1,0 +1,187 @@
+---
+/**
+ * DashShell — universal authenticated shell
+ *
+ * Renders the 3-area grid: sticky tab rail (left), sticky header (top),
+ * scrollable content frame (remainder). Every authenticated route renders
+ * inside this layout.
+ *
+ * Consumers pass `tabs` and `currentPath`; DashShell passes them down to
+ * TabRail so it can compute active state. A `<slot />` receives page content.
+ *
+ * The `passthrough` prop removes content padding — use it for iframe tabs
+ * (filebrowser, browser) where the frame must fill the full viewport height.
+ */
+import type { TabRegistration } from '../types/tabs.ts';
+import TabRail from '../components/TabRail.astro';
+import DashHeader from '../components/DashHeader.astro';
+import Toast from '../components/Toast.astro';
+
+interface Props {
+  /** Tab registrations — drives the rail and breadcrumb. */
+  tabs: TabRegistration[];
+  /** Current Astro route path, e.g. '/' or '/openclaw'. */
+  currentPath: string;
+  /** Lordship slug, e.g. '3venezie'. Shown in breadcrumb. */
+  slug: string;
+  /** Tailnet hostname, e.g. '3venezie.tail74c072.ts.net'. Shown in header meta. */
+  hostname?: string;
+  /** Dashboard version string, e.g. 'v2026.5.7'. */
+  version?: string;
+  /** Signed-in GitHub username for UserMenu. */
+  githubUser?: string;
+  /** Signed-in GitHub avatar URL. Falls back to iris-gradient initials. */
+  githubAvatarUrl?: string;
+  /** Signed-in GitHub email for UserMenu dropdown. */
+  githubEmail?: string;
+  /**
+   * When true, removes content padding — for passthrough iframe tabs.
+   * Sets `.dsh-shell--passthrough` on the shell element.
+   */
+  passthrough?: boolean;
+  /** Page <title> override. Falls back to current tab label. */
+  pageTitle?: string;
+  /** Rail brand prefix (e.g. "lord", "overlord"). Threaded to TabRail. */
+  brandPrefix?: string;
+  /** Rail brand suffix (e.g. "ship", "dash"). Threaded to TabRail. */
+  brandSuffix?: string;
+  /**
+   * Extra consumer-specific stylesheets to <link> into <head>, AFTER
+   * the canonical agent-ui + shell.css. Use for legacy page CSS that
+   * a consumer hasn't yet migrated to am-* primitives (e.g.
+   * overlord-dashboard's /dashboard.css). Loaded last so consumer
+   * rules win the cascade.
+   */
+  extraStylesheets?: string[];
+}
+
+const {
+  tabs,
+  currentPath,
+  slug,
+  hostname,
+  version,
+  githubUser,
+  githubAvatarUrl,
+  githubEmail,
+  passthrough = false,
+  pageTitle,
+  brandPrefix,
+  brandSuffix,
+  extraStylesheets = [],
+} = Astro.props;
+
+// Derive current tab label for breadcrumb + <title>
+const currentTab = tabs.find(t =>
+  t.path === '/' ? currentPath === '/' : currentPath.startsWith(t.path)
+);
+const currentLabel = (currentTab?.label ?? currentPath.replace(/^\//, '')) || 'dashboard';
+const titleText = pageTitle ?? currentTab?.title ?? currentLabel;
+---
+
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>{titleText} · {slug} · agentic·media</title>
+    <link rel="stylesheet" href="/agent-ui/brand/tokens.css" />
+    <link rel="stylesheet" href="/agent-ui/brand/fluid.css" />
+    <link rel="stylesheet" href="/agent-ui/components/components.css" />
+    <link rel="stylesheet" href="/ui/styles/shell.css" />
+    {extraStylesheets.map(href => (
+      <link rel="stylesheet" href={href} />
+    ))}
+    <!-- Bundled htmx + sse extension. Concatenated so the extension
+         registers in the same script-execution turn as htmx itself,
+         eliminating a registration race where htmx scanned the DOM
+         (on DOMContentLoaded) before the sse extension's
+         defineExtension call ran. -->
+    <script is:inline src="/agent-ui/vendor/htmx-bundle.min.js" defer></script>
+    <script is:inline src="/agent-ui/vendor/htmx-ext-head-support.js" defer></script>
+  </head>
+  <body
+    hx-headers='{"X-Requested-With":"htmx"}'
+    hx-ext="head-support"
+  >
+    <div class:list={['dsh-shell', passthrough && 'dsh-shell--passthrough']}>
+
+      <aside class="dsh-shell__rail" id="dsh-rail" aria-label="Site navigation">
+        <TabRail
+          tabs={tabs}
+          currentPath={currentPath}
+          slug={slug}
+          hostname={hostname}
+          version={version}
+          brandPrefix={brandPrefix}
+          brandSuffix={brandSuffix}
+        />
+      </aside>
+
+      <header class="dsh-shell__header">
+        <DashHeader
+          slug={slug}
+          currentLabel={currentLabel}
+          hostname={hostname}
+          version={version}
+          githubUser={githubUser}
+          githubAvatarUrl={githubAvatarUrl}
+          githubEmail={githubEmail}
+        />
+      </header>
+
+      <main class="dsh-shell__content" id="main-content">
+        <slot />
+      </main>
+
+    </div>
+
+    <!-- Toast host — single instance, mounted once in shell -->
+    <Toast />
+
+  </body>
+</html>
+
+<script is:inline>
+  // Mobile rail toggle: the DashHeader emits a 'dsh:rail-toggle' custom event.
+  document.addEventListener('dsh:rail-toggle', () => {
+    const rail = document.getElementById('dsh-rail');
+    if (!rail) return;
+    const isOpen = rail.dataset.open === 'true';
+    rail.dataset.open = isOpen ? 'false' : 'true';
+  });
+
+  // Close rail on click-outside at mobile
+  document.addEventListener('click', (e) => {
+    const rail = document.getElementById('dsh-rail');
+    if (!rail || rail.dataset.open !== 'true') return;
+    if (!rail.contains(e.target)) {
+      rail.dataset.open = 'false';
+    }
+  });
+
+  // ── htmx defaults ──────────────────────────────────────────────────
+  // Surfaces unhandled HTTP errors as a danger toast so partial
+  // endpoints don't need to repeat the same boilerplate.
+  document.body.addEventListener('htmx:responseError', (e) => {
+    const detail = e.detail || {};
+    const xhr = detail.xhr || {};
+    // If the server explicitly fired dashToast via HX-Trigger we skip —
+    // htmx will have already dispatched the event.
+    const trig = xhr.getResponseHeader && xhr.getResponseHeader('HX-Trigger');
+    if (trig && /dashToast/.test(trig)) return;
+    if (window.dashToast) {
+      window.dashToast({
+        message: 'request failed (' + (xhr.status || '?') + ')',
+        tone: 'danger',
+      });
+    }
+  });
+
+  // Connection failures during long-poll / SSE — surface once.
+  document.body.addEventListener('htmx:sseError', () => {
+    if (window.dashToast) {
+      window.dashToast({ message: 'live stream disconnected', tone: 'warn' });
+    }
+  });
+</script>

@@ -1,0 +1,199 @@
+---
+/**
+ * DashHeader — sticky 56px top bar
+ *
+ * Contents:
+ * - Left: mobile rail-toggle button + Breadcrumb
+ * - Right: hostname meta + live UTC clock + UserMenu
+ *
+ * The rail-toggle button dispatches a 'dsh:rail-toggle' custom event
+ * that DashShell listens to. It is hidden at ≥768px via CSS.
+ */
+import Breadcrumb from './Breadcrumb.astro';
+import UserMenu from './UserMenu.astro';
+
+interface Props {
+  /** Lordship slug. */
+  slug: string;
+  /** Current tab label for the breadcrumb. */
+  currentLabel: string;
+  /** Tailnet hostname shown in the meta section. */
+  hostname?: string;
+  /** Version string shown in the meta section. */
+  version?: string;
+  /** GitHub username for UserMenu. */
+  githubUser?: string;
+  /** GitHub avatar URL. Falls back to iris-gradient initials. */
+  githubAvatarUrl?: string;
+  /** GitHub email for UserMenu dropdown. */
+  githubEmail?: string;
+}
+
+const {
+  slug,
+  currentLabel,
+  hostname,
+  version,
+  githubUser,
+  githubAvatarUrl,
+  githubEmail,
+} = Astro.props;
+
+// Short hostname without slug prefix for display
+const hostnameShort = hostname?.replace(`${slug}.`, '') ?? hostname;
+---
+
+<div class="dsh-header">
+  <div class="dsh-header__left">
+    <!-- Mobile rail toggle — hidden at ≥768px via CSS -->
+    <button
+      class="am-btn am-btn--ghost am-btn--sm dsh-header__rail-toggle"
+      aria-label="Open menu"
+      id="dsh-rail-toggle-btn"
+    >
+      <svg class="am-icon am-icon--sm" aria-hidden="true">
+        <use href="/agent-ui/icons/sprite.svg#menu"></use>
+      </svg>
+    </button>
+
+    <Breadcrumb
+      brand="agentic·media"
+      segments={[slug, currentLabel]}
+      currentIndex={1}
+    />
+  </div>
+
+  <div class="dsh-header__right">
+    <div class="dsh-header__meta">
+      <!-- Live UTC clock — updated by inline script -->
+      <span class="dsh-header__clock" id="dsh-clock" aria-live="off">
+        00:00:00 UTC
+      </span>
+      {hostnameShort && (
+        <>
+          <span class="dsh-header__meta-divider" aria-hidden="true"></span>
+          <span class="dsh-header__hostname">{hostnameShort}</span>
+        </>
+      )}
+      {version && (
+        <>
+          <span class="dsh-header__meta-divider" aria-hidden="true"></span>
+          <span>{version}</span>
+        </>
+      )}
+    </div>
+
+    <UserMenu
+      githubUser={githubUser}
+      githubEmail={githubEmail}
+      githubAvatarUrl={githubAvatarUrl}
+    />
+  </div>
+</div>
+
+<style>
+  .dsh-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    height: 100%;
+    padding: 0 var(--dsh-content-pad);
+    gap: var(--am-s-5);
+  }
+
+  .dsh-header__left {
+    display: flex;
+    align-items: center;
+    gap: var(--am-s-4);
+    min-width: 0;
+  }
+
+  .dsh-header__right {
+    display: flex;
+    align-items: center;
+    gap: var(--am-s-4);
+    flex-shrink: 0;
+  }
+
+  /* Rail toggle: hidden at desktop, visible on mobile */
+  .dsh-header__rail-toggle {
+    display: none;
+  }
+
+  @media (max-width: 768px) {
+    .dsh-header__rail-toggle {
+      display: inline-flex;
+    }
+  }
+
+  .dsh-header__meta {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--am-s-3);
+    font-family: var(--am-font-mono);
+    font-size: var(--am-fz-xs);
+    color: var(--am-muted);
+    letter-spacing: 0.02em;
+  }
+
+  .dsh-header__meta-divider {
+    width: 1px;
+    height: 14px;
+    background: var(--am-border-2);
+  }
+
+  .dsh-header__clock {
+    color: var(--am-text-2);
+  }
+
+  /* Animated live dot before clock */
+  .dsh-header__clock::before {
+    content: '';
+    display: inline-block;
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: var(--am-accent);
+    margin-right: 6px;
+    vertical-align: 1px;
+    animation: dsh-eyepulse 2.4s ease-in-out infinite;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .dsh-header__clock::before {
+      animation: none;
+    }
+  }
+
+  /* Drop hostname + version on very narrow viewports */
+  @media (max-width: 640px) {
+    .dsh-header__hostname,
+    .dsh-header__meta-divider:not(:first-child) {
+      display: none;
+    }
+  }
+</style>
+
+<script is:inline>
+  // Rail toggle — dispatch custom event for DashShell to handle
+  const toggleBtn = document.getElementById('dsh-rail-toggle-btn');
+  if (toggleBtn) {
+    toggleBtn.addEventListener('click', () => {
+      document.dispatchEvent(new CustomEvent('dsh:rail-toggle'));
+    });
+  }
+
+  // Live UTC clock — updates every second
+  const clockEl = document.getElementById('dsh-clock');
+  if (clockEl) {
+    function updateClock() {
+      const now = new Date();
+      const hh = String(now.getUTCHours()).padStart(2, '0');
+      const mm = String(now.getUTCMinutes()).padStart(2, '0');
+      const ss = String(now.getUTCSeconds()).padStart(2, '0');
+      clockEl.textContent = `${hh}:${mm}:${ss} UTC`;
+    }
+    updateClock();
+    setInterval(updateClock, 1000);
+  }
+</script>

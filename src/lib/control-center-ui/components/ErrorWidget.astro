@@ -1,0 +1,113 @@
+---
+/**
+ * ErrorWidget — inline alert block
+ *
+ * Tones: 'danger' (role="alert") and 'warn' (role="status").
+ * Layout: icon left + title + message + optional retry/dismiss right.
+ *
+ * For danger tone, use role="alert" (assertive, immediate).
+ * For warn tone, use role="status" (polite, non-intrusive).
+ */
+
+type Tone = 'danger' | 'warn';
+
+interface Props {
+  /** Visual tone. 'danger' = red, 'warn' = amber. */
+  tone?: Tone;
+  /** Alert title, e.g. 'Docker socket unreachable'. */
+  title: string;
+  /** Supporting message text. */
+  message?: string;
+}
+
+const { tone = 'danger', title, message } = Astro.props;
+
+const role = tone === 'danger' ? 'alert' : 'status';
+const iconName = tone === 'danger' ? 'circle-x' : 'circle-warn';
+---
+
+<div class:list={['dsh-error', `dsh-error--${tone}`]} role={role}>
+  <div class="dsh-error__icon">
+    <svg class="am-icon am-icon--md" aria-hidden="true">
+      <use href={`/agent-ui/icons/sprite.svg#${iconName}`}></use>
+    </svg>
+  </div>
+  <div>
+    <div class="dsh-error__title">{title}</div>
+    {message && <p class="dsh-error__msg">{message}</p>}
+    <slot />
+  </div>
+  <!-- Optional action slot (retry button, dismiss button, etc.) -->
+  <div class="dsh-error__action">
+    <slot name="action" />
+  </div>
+</div>
+
+<style>
+  .dsh-error {
+    display: grid;
+    grid-template-columns: 36px 1fr auto;
+    gap: var(--am-s-3);
+    padding: var(--am-s-3) var(--am-s-4);
+    border: 1px solid;
+    border-radius: var(--am-radius);
+    align-items: start;
+  }
+
+  .dsh-error__icon {
+    width: 32px;
+    height: 32px;
+    border-radius: var(--am-radius-sm);
+    display: grid;
+    place-items: center;
+  }
+
+  .dsh-error__title {
+    font-family: var(--am-font-display);
+    font-size: var(--am-fz-sm);
+    font-weight: var(--am-fw-ui);
+    margin: 2px 0 4px;
+    line-height: 1.4;
+  }
+
+  .dsh-error__msg {
+    color: var(--am-muted);
+    font-size: var(--am-fz-sm);
+    margin: 0;
+    line-height: 1.5;
+  }
+
+  .dsh-error__action:empty {
+    display: none;
+  }
+
+  /* Danger tone */
+  .dsh-error--danger {
+    border-color: rgba(239, 68, 68, 0.3);
+    background: var(--am-danger-tint);
+  }
+
+  .dsh-error--danger .dsh-error__icon {
+    background: rgba(239, 68, 68, 0.18);
+    color: var(--am-danger);
+  }
+
+  .dsh-error--danger .dsh-error__title {
+    color: var(--am-danger);
+  }
+
+  /* Warn tone */
+  .dsh-error--warn {
+    border-color: rgba(251, 191, 36, 0.3);
+    background: var(--am-warn-tint);
+  }
+
+  .dsh-error--warn .dsh-error__icon {
+    background: rgba(251, 191, 36, 0.18);
+    color: var(--am-warn);
+  }
+
+  .dsh-error--warn .dsh-error__title {
+    color: var(--am-warn);
+  }
+</style>

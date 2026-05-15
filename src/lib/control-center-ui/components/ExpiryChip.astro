@@ -1,0 +1,130 @@
+---
+/**
+ * ExpiryChip — token-expiry chip
+ *
+ * Tone is derived from time remaining:
+ *   ≥7d   → ok (mint)
+ *   <7d   → warn (amber)
+ *   <2d   → danger (red)
+ *   expired → danger (red), different icon
+ *
+ * The consumer can pass either:
+ *   - `expiryIso` (ISO date string) — tone + label are computed
+ *   - `label` + `tone` — render verbatim (pre-computed)
+ */
+
+type Tone = 'ok' | 'warn' | 'danger';
+
+interface Props {
+  /**
+   * ISO 8601 expiry timestamp. When provided, tone and label
+   * are computed from current time vs this value.
+   */
+  expiryIso?: string;
+  /**
+   * Pre-computed label string, e.g. "expires in 44d".
+   * Used when expiryIso is not available (SSR computed by server).
+   */
+  label?: string;
+  /** Pre-computed tone. Used when label is provided directly. */
+  tone?: Tone;
+}
+
+const { expiryIso, label: labelProp, tone: toneProp } = Astro.props;
+
+function computeExpiry(iso: string): { label: string; tone: Tone; expired: boolean } {
+  const now = Date.now();
+  const exp = new Date(iso).getTime();
+  const diffMs = exp - now;
+
+  if (diffMs <= 0) {
+    // Expired
+    const agoMs = -diffMs;
+    const agoDays = Math.floor(agoMs / 86400000);
+    const agoHours = Math.floor((agoMs % 86400000) / 3600000);
+    const agoLabel = agoDays > 0
+      ? `expired ${agoDays}d ago`
+      : `expired ${agoHours}h ago`;
+    return { label: agoLabel, tone: 'danger', expired: true };
+  }
+
+  const days = Math.floor(diffMs / 86400000);
+  const hours = Math.floor((diffMs % 86400000) / 3600000);
+
+  let label: string;
+  if (days >= 1) {
+    label = hours > 0 ? `expires in ${days}d ${hours}h` : `expires in ${days}d`;
+  } else {
+    label = `expires in ${hours}h`;
+  }
+
+  const tone: Tone = days >= 7 ? 'ok' : days >= 2 ? 'warn' : 'danger';
+  return { label, tone, expired: false };
+}
+
+let resolvedLabel: string;
+let resolvedTone: Tone;
+let isExpired = false;
+
+if (expiryIso) {
+  const computed = computeExpiry(expiryIso);
+  resolvedLabel = computed.label;
+  resolvedTone = computed.tone;
+  isExpired = computed.expired;
+} else {
+  resolvedLabel = labelProp ?? 'unknown';
+  resolvedTone = toneProp ?? 'muted' as Tone;
+}
+
+// Icon: circle-x for expired, circle-warn for danger, clock for ok/warn
+const iconName = isExpired ? 'circle-x' : resolvedTone === 'danger' ? 'circle-warn' : 'clock';
+---
+
+<span class:list={['dsh-chip', `dsh-chip--${resolvedTone}`]}>
+  <svg class="am-icon" aria-hidden="true" style="width:11px;height:11px">
+    <use href={`/agent-ui/icons/sprite.svg#${iconName}`}></use>
+  </svg>
+  {resolvedLabel}
+</span>
+
+<style>
+  .dsh-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    height: 22px;
+    padding: 0 8px;
+    border-radius: var(--am-radius-pill);
+    font-family: var(--am-font-mono);
+    font-size: 11px;
+    font-weight: 500;
+    letter-spacing: 0.02em;
+    border: 1px solid transparent;
+    white-space: nowrap;
+  }
+
+  .dsh-chip--ok {
+    color: var(--am-accent);
+    background: var(--am-accent-tint);
+    border-color: rgba(110, 231, 183, 0.18);
+  }
+
+  .dsh-chip--warn {
+    color: var(--am-warn);
+    background: var(--am-warn-tint);
+    border-color: rgba(251, 191, 36, 0.22);
+  }
+
+  .dsh-chip--danger {
+    color: var(--am-danger);
+    background: var(--am-danger-tint);
+    border-color: rgba(239, 68, 68, 0.22);
+  }
+
+  /* muted fallback (pre-computed label with no tone info) */
+  .dsh-chip--muted {
+    color: var(--am-muted);
+    background: rgba(154, 160, 166, 0.08);
+    border-color: rgba(154, 160, 166, 0.18);
+  }
+</style>

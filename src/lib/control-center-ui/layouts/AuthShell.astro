@@ -1,0 +1,136 @@
+---
+/**
+ * AuthShell — pre-authentication shell
+ *
+ * Slim layout for login and permission-denied screens.
+ * No tab rail. Centered content card (max-width 480px).
+ * Subtle iris/mint radial bloom on near-black background.
+ *
+ * Consumers place their auth content inside <slot />.
+ */
+
+interface Props {
+  /** Lordship slug. Shown in footer. */
+  slug?: string;
+  /** Dashboard version string. Shown in footer. */
+  version?: string;
+  /** Page <title>. */
+  pageTitle?: string;
+}
+
+const {
+  slug,
+  version,
+  pageTitle = 'Sign in',
+} = Astro.props;
+---
+
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>{pageTitle}{slug ? ` · ${slug}` : ''} · agentic·media</title>
+    <link rel="stylesheet" href="/agent-ui/brand/tokens.css" />
+    <link rel="stylesheet" href="/agent-ui/brand/fluid.css" />
+    <link rel="stylesheet" href="/agent-ui/components/components.css" />
+    <link rel="stylesheet" href="/ui/styles/shell.css" />
+    <script is:inline src="/agent-ui/vendor/htmx.min.js" defer></script>
+  </head>
+  <body hx-headers='{"X-Requested-With":"htmx"}'>
+    <div class="dsh-auth">
+
+      <div class="dsh-auth__center">
+        <div class="dsh-auth__inner">
+          <!-- Brand mark -->
+          <div class="dsh-auth__brand">
+            <svg class="dsh-auth__brand-mark" viewBox="0 0 24 24" aria-hidden="true">
+              <path d="M12 2 4 6v6c0 4.5 3.2 8.5 8 10 4.8-1.5 8-5.5 8-10V6l-8-4Z"
+                fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/>
+              <path d="m9 12 2.2 2.2L15 10.4"
+                fill="none" stroke="currentColor" stroke-width="1.6"
+                stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+            <span class="dsh-auth__brand-name">lord<em>·ship</em></span>
+          </div>
+
+          <!-- Auth card -->
+          <div class="dsh-auth__card">
+            <slot />
+          </div>
+        </div>
+      </div>
+
+      <!-- Footer -->
+      <footer class="dsh-auth__footer">
+        {slug && <span>{slug}</span>}
+        {slug && version && <span> · </span>}
+        {version && <span>{version}</span>}
+        {(slug || version) && <span> · </span>}
+        <a href="https://agenticmedia.cc">agenticmedia.cc</a>
+      </footer>
+
+    </div>
+  </body>
+</html>
+
+<style>
+  .dsh-auth__inner {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: var(--am-s-4);
+    width: 100%;
+    max-width: 480px;
+  }
+
+  .dsh-auth__brand {
+    display: flex;
+    align-items: center;
+    gap: var(--am-s-3);
+    color: var(--am-text);
+  }
+
+  .dsh-auth__brand-mark {
+    width: 32px;
+    height: 32px;
+    color: var(--am-accent);
+  }
+
+  .dsh-auth__brand-name {
+    font-family: var(--am-font-display);
+    font-weight: var(--am-fw-display);
+    font-size: var(--am-fz-h3);
+    letter-spacing: var(--am-tracking-tight);
+  }
+
+  .dsh-auth__brand-name em {
+    font-style: normal;
+    opacity: 0.55;
+  }
+
+  .dsh-auth__card {
+    width: 100%;
+    background: var(--am-surface);
+    border: 1px solid var(--am-border);
+    border-radius: var(--am-radius);
+    padding: var(--am-s-6);
+    box-shadow: var(--am-shadow-pop);
+  }
+
+  .dsh-auth__card :global(h2) {
+    margin: 0 0 var(--am-s-2);
+    font-family: var(--am-font-display);
+    font-size: var(--am-fz-h3);
+    font-weight: var(--am-fw-display);
+    letter-spacing: var(--am-tracking-tight);
+    color: var(--am-text);
+  }
+
+  .dsh-auth__card :global(p) {
+    margin: 0 0 var(--am-s-5);
+    color: var(--am-muted);
+    font-size: var(--am-fz-sm);
+    line-height: 1.6;
+  }
+</style>

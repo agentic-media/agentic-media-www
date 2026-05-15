@@ -1,0 +1,156 @@
+---
+/**
+ * Toast — slide-in notification host
+ *
+ * This component renders the SINGLE toast host element with aria-live="polite".
+ * It should be rendered ONCE in DashShell — never inline in page content.
+ *
+ * JS API (global): window.dashToast({ message, tone, duration?, href? })
+ *   tone: 'ok' | 'warn' | 'danger'
+ *   duration: milliseconds until auto-dismiss (default 4000)
+ *   href: when provided, clicking the toast navigates there
+ *
+ * Tones:
+ *   ok     → mint accent, check icon
+ *   warn   → amber, circle-warn icon
+ *   danger → red, circle-x icon
+ */
+---
+
+<div
+  class="dsh-toast-host"
+  id="toast-host"
+  aria-live="polite"
+  aria-atomic="false"
+></div>
+
+<style>
+  .dsh-toast-host {
+    position: fixed;
+    right: 16px;
+    bottom: 16px;
+    z-index: 60;
+    display: flex;
+    flex-direction: column-reverse;
+    gap: 8px;
+    pointer-events: none;
+  }
+
+  /* Individual toast — created by JS */
+  :global(.dsh-toast) {
+    pointer-events: auto;
+    display: grid;
+    grid-template-columns: 24px 1fr auto;
+    gap: var(--am-s-3);
+    align-items: center;
+    min-width: 320px;
+    max-width: 420px;
+    padding: 10px 12px;
+    background: var(--am-surface);
+    border: 1px solid var(--am-border);
+    border-left: 3px solid var(--am-accent);
+    border-radius: var(--am-radius-sm);
+    box-shadow: var(--am-shadow-pop);
+    font-family: var(--am-font);
+    font-size: var(--am-fz-sm);
+    color: var(--am-text);
+    animation: dsh-toast-in var(--am-dur-base) var(--am-ease);
+    text-decoration: none;
+    cursor: default;
+  }
+
+  :global(.dsh-toast--ok) { border-left-color: var(--am-accent); }
+  :global(.dsh-toast--ok .dsh-toast__icon) { color: var(--am-accent); }
+
+  :global(.dsh-toast--warn) { border-left-color: var(--am-warn); }
+  :global(.dsh-toast--warn .dsh-toast__icon) { color: var(--am-warn); }
+
+  :global(.dsh-toast--danger) { border-left-color: var(--am-danger); }
+  :global(.dsh-toast--danger .dsh-toast__icon) { color: var(--am-danger); }
+
+  :global(.dsh-toast__icon) { color: var(--am-accent); }
+
+  :global(.dsh-toast__close) {
+    background: transparent;
+    border: 0;
+    color: var(--am-muted-2);
+    cursor: pointer;
+    padding: 0;
+    width: 18px;
+    height: 18px;
+    display: grid;
+    place-items: center;
+    border-radius: 3px;
+  }
+
+  :global(.dsh-toast__close:hover) {
+    color: var(--am-text);
+    background: var(--am-surface-2);
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    :global(.dsh-toast) {
+      animation: none;
+    }
+  }
+</style>
+
+<script is:inline>
+  (function () {
+    const ICONS = { ok: 'circle-check', warn: 'circle-warn', danger: 'circle-x' };
+    const SPRITE = '/agent-ui/icons/sprite.svg';
+
+    function makeSvgIcon(name, size) {
+      const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+      svg.setAttribute('class', 'am-icon am-icon--' + (size || 'md'));
+      svg.setAttribute('aria-hidden', 'true');
+      const use = document.createElementNS('http://www.w3.org/2000/svg', 'use');
+      use.setAttribute('href', SPRITE + '#' + name);
+      svg.appendChild(use);
+      return svg;
+    }
+
+    window.dashToast = function ({ message, tone, duration, href }) {
+      tone = tone || 'ok';
+      duration = duration !== undefined ? duration : 4000;
+
+      const host = document.getElementById('toast-host');
+      if (!host) return;
+
+      const El = href ? 'a' : 'div';
+      const toast = document.createElement(El);
+      toast.className = 'dsh-toast dsh-toast--' + tone;
+      if (href) { toast.href = href; toast.style.cursor = 'pointer'; }
+
+      // Icon span
+      const iconSpan = document.createElement('span');
+      iconSpan.className = 'dsh-toast__icon';
+      iconSpan.appendChild(makeSvgIcon(ICONS[tone] || ICONS.ok, 'md'));
+
+      // Message span — textContent only, no HTML
+      const msgSpan = document.createElement('span');
+      msgSpan.textContent = message;
+
+      // Close button
+      const closeBtn = document.createElement('button');
+      closeBtn.className = 'dsh-toast__close';
+      closeBtn.type = 'button';
+      closeBtn.setAttribute('aria-label', 'Dismiss toast');
+      closeBtn.appendChild(makeSvgIcon('x', 'sm'));
+
+      toast.appendChild(iconSpan);
+      toast.appendChild(msgSpan);
+      toast.appendChild(closeBtn);
+
+      function dismiss() { toast.remove(); }
+      closeBtn.addEventListener('click', function (e) {
+        e.stopPropagation();
+        e.preventDefault();
+        dismiss();
+      });
+
+      host.appendChild(toast);
+      if (duration > 0) setTimeout(dismiss, duration);
+    };
+  })();
+</script>

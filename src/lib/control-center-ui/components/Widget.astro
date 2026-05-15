@@ -1,0 +1,158 @@
+---
+/**
+ * Widget — titled section card
+ *
+ * The primary content container. Every named page section renders inside a Widget.
+ * Two slot surfaces: default slot (body content) and named slot "actions" for
+ * optional header action buttons.
+ *
+ * Collapsible mode renders the widget as a native <details>/<summary> element,
+ * with a chevron caret that rotates open.
+ *
+ * Body padding: default has var(--am-s-4). Use `flush` prop for tables that
+ * own their own padding (use `.dsh-widget__body--flush` internally).
+ */
+
+interface Props {
+  /** Widget title (rendered in <h3>). */
+  title: string;
+  /** Optional subtitle meta line — muted monospace below title. */
+  meta?: string;
+  /**
+   * When true, renders as <details>/<summary> for collapsible behavior.
+   * Pass `open` to start expanded.
+   */
+  collapsible?: boolean;
+  /** When collapsible, start in expanded state. Default true. */
+  open?: boolean;
+  /**
+   * When true, removes body padding — use for tables that manage
+   * their own internal spacing.
+   */
+  flush?: boolean;
+}
+
+const {
+  title,
+  meta,
+  collapsible = false,
+  open = true,
+  flush = false,
+} = Astro.props;
+---
+
+{collapsible ? (
+  <details class="dsh-widget dsh-widget--collapsible" open={open}>
+    <summary class="dsh-widget__head">
+      <div class="dsh-widget__title" style="display:flex;align-items:center;gap:8px">
+        <span class="dsh-widget__caret">
+          <svg class="am-icon am-icon--sm" aria-hidden="true">
+            <use href="/agent-ui/icons/sprite.svg#chevron-right"></use>
+          </svg>
+        </span>
+        <h3>{title}</h3>
+      </div>
+      {meta && <div class="dsh-widget__meta">{meta}</div>}
+    </summary>
+    <div class:list={['dsh-widget__body', flush && 'dsh-widget__body--flush']}>
+      <slot />
+    </div>
+  </details>
+) : (
+  <div class="dsh-widget">
+    <div class="dsh-widget__head">
+      <div class="dsh-widget__title">
+        <h3>{title}</h3>
+        {meta && <div class="dsh-widget__meta">{meta}</div>}
+      </div>
+      <div class="dsh-widget__actions">
+        <slot name="actions" />
+      </div>
+    </div>
+    <div class:list={['dsh-widget__body', flush && 'dsh-widget__body--flush']}>
+      <slot />
+    </div>
+  </div>
+)}
+
+<style>
+  .dsh-widget {
+    background: var(--am-surface);
+    border: 1px solid var(--am-border);
+    border-radius: var(--am-radius);
+    overflow: hidden;
+  }
+
+  .dsh-widget__head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--am-s-3);
+    padding: var(--am-s-3) var(--am-s-4);
+    border-bottom: 1px solid var(--am-border);
+    background: linear-gradient(180deg, rgba(255, 255, 255, 0.015), transparent);
+  }
+
+  .dsh-widget__title {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    min-width: 0;
+  }
+
+  .dsh-widget__title h3 {
+    margin: 0;
+    font-family: var(--am-font-display);
+    font-size: var(--am-fz-md);
+    font-weight: var(--am-fw-ui);
+    letter-spacing: var(--am-tracking-tight);
+    color: var(--am-text);
+  }
+
+  .dsh-widget__meta {
+    font-family: var(--am-font-mono);
+    font-size: 11px;
+    color: var(--am-muted-2);
+    letter-spacing: 0.02em;
+  }
+
+  .dsh-widget__actions {
+    display: inline-flex;
+    gap: var(--am-s-2);
+    flex-shrink: 0;
+  }
+
+  .dsh-widget__body {
+    padding: var(--am-s-4);
+  }
+
+  .dsh-widget__body--flush {
+    padding: 0;
+  }
+
+  /* Collapsible variant */
+  .dsh-widget--collapsible summary {
+    cursor: pointer;
+    list-style: none;
+  }
+
+  .dsh-widget--collapsible summary::-webkit-details-marker {
+    display: none;
+  }
+
+  .dsh-widget--collapsible[open] .dsh-widget__caret {
+    transform: rotate(90deg);
+  }
+
+  .dsh-widget__caret {
+    color: var(--am-muted);
+    transition: transform var(--am-dur-fast) var(--am-ease);
+    flex-shrink: 0;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .dsh-widget__caret {
+      transition: none;
+    }
+  }
+</style>

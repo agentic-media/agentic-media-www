@@ -1,0 +1,127 @@
+---
+/**
+ * KpiTile — single metric tile
+ *
+ * Renders inside a `.dsh-kpis` grid container (auto-fit at min 170px).
+ * Supports an optional progress bar with tone coloring.
+ * When `href` is provided, the tile becomes a link.
+ */
+
+type Tone = 'ok' | 'warn' | 'danger' | 'default';
+
+interface Props {
+  /** Metric label — monospace uppercase muted, e.g. 'Containers up'. */
+  label: string;
+  /** Primary metric value — large Blinker display. */
+  value: string | number;
+  /** Secondary denominator or unit shown muted, e.g. '/6' or 's'. */
+  valueSub?: string;
+  /** Sub-line below value — muted monospace 11px. */
+  sub?: string;
+  /** Visual tone affecting sub text and progress bar color. */
+  tone?: Tone;
+  /** Progress 0–100. When provided, renders a thin bar at bottom. */
+  progress?: number;
+  /** When provided, the tile becomes a clickable link. */
+  href?: string;
+}
+
+const {
+  label,
+  value,
+  valueSub,
+  sub,
+  tone = 'default',
+  progress,
+  href,
+} = Astro.props;
+
+const Tag = href ? 'a' : 'div';
+---
+
+<Tag
+  class:list={['dsh-kpi', tone !== 'default' && `dsh-kpi--${tone}`]}
+  href={href}
+>
+  <span class="dsh-kpi__label">{label}</span>
+  <span class="dsh-kpi__value">
+    {value}
+    {valueSub && <em style="color:var(--am-muted-2);font-weight:400">{valueSub}</em>}
+  </span>
+  {sub && <span class="dsh-kpi__sub">{sub}</span>}
+  {progress !== undefined && (
+    <span class="dsh-kpi__bar">
+      <i style={`width:${Math.min(100, Math.max(0, progress))}%`}></i>
+    </span>
+  )}
+</Tag>
+
+<style>
+  .dsh-kpi {
+    background: var(--am-surface);
+    border: 1px solid var(--am-border);
+    border-radius: var(--am-radius);
+    padding: var(--am-s-4);
+    display: flex;
+    flex-direction: column;
+    gap: var(--am-s-1);
+    text-decoration: none;
+    position: relative;
+    transition:
+      border-color var(--am-dur-fast) var(--am-ease),
+      background var(--am-dur-fast) var(--am-ease);
+  }
+
+  a.dsh-kpi:hover {
+    border-color: var(--am-border-3);
+    background: var(--am-surface-2);
+  }
+
+  .dsh-kpi__label {
+    font-family: var(--am-font-mono);
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: var(--am-tracking-wide);
+    text-transform: uppercase;
+    color: var(--am-muted);
+  }
+
+  .dsh-kpi__value {
+    font-family: var(--am-font-display);
+    font-size: 32px;
+    font-weight: var(--am-fw-display);
+    letter-spacing: var(--am-tracking-tight);
+    color: var(--am-text);
+    line-height: 1.1;
+    font-variant-numeric: tabular-nums;
+  }
+
+  .dsh-kpi__sub {
+    font-family: var(--am-font-mono);
+    font-size: 11px;
+    color: var(--am-muted-2);
+  }
+
+  .dsh-kpi__bar {
+    height: 3px;
+    background: var(--am-base-2);
+    border-radius: 2px;
+    margin-top: auto;
+    overflow: hidden;
+    display: block;
+  }
+
+  .dsh-kpi__bar > i {
+    display: block;
+    height: 100%;
+    background: var(--am-accent);
+  }
+
+  /* Tone overrides */
+  .dsh-kpi--ok .dsh-kpi__bar > i    { background: var(--am-accent); }
+  .dsh-kpi--warn .dsh-kpi__bar > i  { background: var(--am-warn); }
+  .dsh-kpi--danger .dsh-kpi__bar > i { background: var(--am-danger); }
+
+  .dsh-kpi--warn .dsh-kpi__sub   { color: var(--am-warn); }
+  .dsh-kpi--danger .dsh-kpi__sub { color: var(--am-danger); }
+</style>

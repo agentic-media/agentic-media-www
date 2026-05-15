@@ -1,0 +1,80 @@
+---
+/**
+ * Breadcrumb — monospace muted path segments
+ *
+ * Renders "brand / seg1 / seg2" with the last segment highlighted as current.
+ * Designed to live inside DashHeader.
+ */
+
+interface Props {
+  /** Brand segment label, e.g. 'agentic·media'. */
+  brand?: string;
+  /** Path segments after the brand, e.g. ['3venezie', 'overview']. */
+  segments?: string[];
+  /**
+   * Index (0-based) of the segment to mark as current.
+   * Defaults to last segment.
+   */
+  currentIndex?: number;
+}
+
+const {
+  brand = 'agentic·media',
+  segments = [],
+  currentIndex,
+} = Astro.props;
+
+const lastIdx = segments.length - 1;
+const activeIdx = currentIndex ?? lastIdx;
+---
+
+<nav class="dsh-crumb" aria-label="Breadcrumb">
+  {brand && (
+    <span class="dsh-crumb__seg--brand">{brand}</span>
+  )}
+  {segments.map((seg, i) => (
+    <>
+      <span class="dsh-crumb__sep" aria-hidden="true">/</span>
+      <span class:list={[
+        'dsh-crumb__seg',
+        i === activeIdx && 'dsh-crumb__seg--current',
+      ]}>
+        {seg}
+      </span>
+    </>
+  ))}
+</nav>
+
+<style>
+  .dsh-crumb {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--am-s-2);
+    font-family: var(--am-font-mono);
+    font-size: var(--am-fz-xs);
+    color: var(--am-muted);
+    letter-spacing: 0.02em;
+  }
+
+  .dsh-crumb__sep {
+    color: var(--am-muted-2);
+    padding: 0 2px;
+  }
+
+  .dsh-crumb__seg {
+    color: var(--am-muted);
+  }
+
+  .dsh-crumb__seg--current {
+    color: var(--am-text);
+  }
+
+  .dsh-crumb__seg--brand {
+    color: var(--am-text);
+    font-family: var(--am-font-display);
+    font-weight: var(--am-fw-ui);
+    font-size: var(--am-fz-sm);
+    letter-spacing: var(--am-tracking-tight);
+    text-transform: lowercase;
+  }
+</style>

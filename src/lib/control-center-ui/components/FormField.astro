@@ -1,0 +1,174 @@
+---
+/**
+ * FormField — labeled input/select/textarea
+ *
+ * Height matches .am-btn--md (34px) for inline button pairings.
+ * Supports text, password, email, number, select, and textarea input types.
+ * Error state is shown via data-state="error" on the wrapper.
+ *
+ * Assumptions:
+ * - Consumer passes `id` so the label[for] link works.
+ * - Hint and error messages are mutually exclusive (error takes precedence).
+ */
+
+type InputType = 'text' | 'password' | 'email' | 'number' | 'search' | 'url';
+
+interface Props {
+  /** Field ID — must match `name` if used in a form. */
+  id: string;
+  /** Visible label text. */
+  label: string;
+  /** Input type. Ignored for select and textarea. */
+  type?: InputType;
+  /** Placeholder text. */
+  placeholder?: string;
+  /** Current value (pre-filled). */
+  value?: string;
+  /** Hint text shown below the input when no error. */
+  hint?: string;
+  /** Error message. When set, applies error styling. */
+  error?: string;
+  /** Whether this is a <select> element. */
+  isSelect?: boolean;
+  /** Options for <select>. */
+  options?: string[];
+  /** Whether this is a <textarea>. */
+  isTextarea?: boolean;
+  /** Whether the field is required. */
+  required?: boolean;
+  /** Whether the field is disabled. */
+  disabled?: boolean;
+}
+
+const {
+  id,
+  label,
+  type = 'text',
+  placeholder,
+  value,
+  hint,
+  error,
+  isSelect = false,
+  options = [],
+  isTextarea = false,
+  required = false,
+  disabled = false,
+} = Astro.props;
+
+const state = error ? 'error' : undefined;
+---
+
+<div class="dsh-field" data-state={state}>
+  <label class="dsh-field__label" for={id}>{label}</label>
+
+  {isSelect ? (
+    <select
+      id={id}
+      name={id}
+      class="am-input"
+      required={required}
+      disabled={disabled}
+    >
+      {options.map(opt => (
+        <option selected={opt === value}>{opt}</option>
+      ))}
+      <slot name="options" />
+    </select>
+  ) : isTextarea ? (
+    <textarea
+      id={id}
+      name={id}
+      placeholder={placeholder}
+      required={required}
+      disabled={disabled}
+    >{value}</textarea>
+  ) : (
+    <input
+      id={id}
+      name={id}
+      type={type}
+      class="am-input"
+      placeholder={placeholder}
+      value={value}
+      required={required}
+      disabled={disabled}
+    />
+  )}
+
+  {error ? (
+    <div class="dsh-field__error" role="alert">{error}</div>
+  ) : hint ? (
+    <div class="dsh-field__hint">{hint}</div>
+  ) : null}
+</div>
+
+<style>
+  .dsh-field {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
+
+  .dsh-field__label {
+    font-family: var(--am-font-mono);
+    font-size: 11px;
+    letter-spacing: var(--am-tracking-wide);
+    text-transform: uppercase;
+    color: var(--am-muted);
+    font-weight: 700;
+  }
+
+  .dsh-field__hint {
+    font-size: 12px;
+    color: var(--am-muted);
+  }
+
+  .dsh-field__error {
+    font-size: var(--am-fz-xs);
+    color: var(--am-danger);
+  }
+
+  /* Input chrome — shared with .am-input class from agent-ui */
+  .dsh-field input,
+  .dsh-field select,
+  .dsh-field textarea {
+    height: var(--am-btn-h-md);
+    padding: 0 var(--am-btn-px-md);
+    background: var(--am-base);
+    border: 1px solid var(--am-border);
+    border-radius: var(--am-btn-radius);
+    color: var(--am-text);
+    font-family: var(--am-font);
+    font-size: var(--am-fz-sm);
+    outline: none;
+    width: 100%;
+    transition:
+      border-color var(--am-dur-fast) var(--am-ease),
+      background var(--am-dur-fast) var(--am-ease);
+  }
+
+  .dsh-field textarea {
+    height: auto;
+    min-height: 96px;
+    padding: var(--am-s-2) var(--am-btn-px-md);
+    resize: vertical;
+    line-height: 1.5;
+  }
+
+  .dsh-field input:focus,
+  .dsh-field select:focus,
+  .dsh-field textarea:focus {
+    border-color: var(--am-accent);
+    background: var(--am-base-2);
+  }
+
+  .dsh-field[data-state="error"] input,
+  .dsh-field[data-state="error"] select,
+  .dsh-field[data-state="error"] textarea {
+    border-color: var(--am-danger);
+  }
+
+  .dsh-field input::placeholder {
+    color: var(--am-muted-2);
+  }
+</style>

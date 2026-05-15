@@ -1,0 +1,126 @@
+/* ──────────────────────────────────────────────────────────────────
+   @agentic-media/agent-ui — fluid scale v0.2
+   Clamp-based fluid type, spacing, and content widths.
+
+   Strictly additive. The legacy absolute tokens in tokens.css keep
+   working; this file introduces a new --am-fluid-* namespace that
+   consumer surfaces opt into.
+
+   Reference bounds:
+     min viewport  = 360px  (most narrow phone we care about)
+     max viewport  = 1440px (rail + content stops scaling above this)
+
+   The clamp() third argument uses CSS rems so user font-size
+   preferences continue to influence the result.
+   ────────────────────────────────────────────────────────────── */
+
+:root {
+  /* ── fluid: type scale ─────────────────────────────────────── */
+  --am-fluid-text-xs:  clamp(0.75rem,  0.72rem + 0.16vw, 0.83rem);
+  --am-fluid-text-sm:  clamp(0.875rem, 0.84rem + 0.18vw, 0.97rem);
+  --am-fluid-text-md:  clamp(1rem,     0.96rem + 0.21vw, 1.11rem);
+  --am-fluid-text-lg:  clamp(1.125rem, 1.07rem + 0.27vw, 1.27rem);
+  --am-fluid-text-xl:  clamp(1.375rem, 1.27rem + 0.51vw, 1.66rem);
+  --am-fluid-text-2xl: clamp(1.75rem,  1.55rem + 0.97vw, 2.30rem);
+  --am-fluid-text-3xl: clamp(2.25rem,  1.93rem + 1.59vw, 3.16rem);
+
+  /* ── fluid: spacing scale ──────────────────────────────────── */
+  --am-fluid-space-2xs: clamp(0.25rem, 0.24rem + 0.05vw, 0.28rem);
+  --am-fluid-space-xs:  clamp(0.5rem,  0.48rem + 0.10vw, 0.56rem);
+  --am-fluid-space-sm:  clamp(0.75rem, 0.72rem + 0.16vw, 0.83rem);
+  --am-fluid-space-md:  clamp(1rem,    0.96rem + 0.21vw, 1.11rem);
+  --am-fluid-space-lg:  clamp(1.5rem,  1.44rem + 0.32vw, 1.66rem);
+  --am-fluid-space-xl:  clamp(2rem,    1.91rem + 0.43vw, 2.22rem);
+  --am-fluid-space-2xl: clamp(3rem,    2.87rem + 0.65vw, 3.33rem);
+
+  /* ── content widths ───────────────────────────────────────── */
+  --am-content-narrow: 640px;
+  --am-content:        920px;
+  --am-content-wide:   1200px;
+}
+
+/* ── opt-in fluid layout primitives ────────────────────────────
+   Use as wrappers when a page wants the fluid look. Legacy markup
+   that doesn't carry these classes keeps the absolute tokens.
+   ────────────────────────────────────────────────────────────── */
+
+/* .am-fluid → root font sizing for a section */
+.am-fluid {
+  font-size: var(--am-fluid-text-md);
+  line-height: 1.55;
+}
+.am-fluid h1 { font-size: var(--am-fluid-text-3xl); line-height: 1.1; }
+.am-fluid h2 { font-size: var(--am-fluid-text-2xl); line-height: 1.15; }
+.am-fluid h3 { font-size: var(--am-fluid-text-xl);  line-height: 1.2;  }
+.am-fluid h4 { font-size: var(--am-fluid-text-lg);  line-height: 1.25; }
+
+/* .am-stack → vertical flow with consistent rhythm.
+   Override step with --am-stack-gap. */
+.am-stack         { display: flex; flex-direction: column; gap: var(--am-stack-gap, var(--am-fluid-space-md)); }
+.am-stack--xs     { --am-stack-gap: var(--am-fluid-space-xs); }
+.am-stack--sm     { --am-stack-gap: var(--am-fluid-space-sm); }
+.am-stack--md     { --am-stack-gap: var(--am-fluid-space-md); }
+.am-stack--lg     { --am-stack-gap: var(--am-fluid-space-lg); }
+.am-stack--xl     { --am-stack-gap: var(--am-fluid-space-xl); }
+
+/* .am-cluster → horizontal flow that wraps. Buttons, pills, tags. */
+.am-cluster       { display: flex; flex-wrap: wrap; gap: var(--am-cluster-gap, var(--am-fluid-space-sm)); align-items: center; }
+.am-cluster--xs   { --am-cluster-gap: var(--am-fluid-space-xs); }
+.am-cluster--sm   { --am-cluster-gap: var(--am-fluid-space-sm); }
+.am-cluster--md   { --am-cluster-gap: var(--am-fluid-space-md); }
+
+/* .am-grid → responsive auto-fit grid. Set min item width via
+   --am-grid-min (default 16rem ≈ 256px). */
+.am-grid {
+  display: grid;
+  gap: var(--am-grid-gap, var(--am-fluid-space-md));
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, var(--am-grid-min, 16rem)), 1fr));
+}
+
+/* .am-card → card surface with fluid padding.
+   Pairs with .am-stack inside for vertical rhythm. */
+.am-card {
+  background: var(--am-surface);
+  border: 1px solid var(--am-border);
+  border-radius: var(--am-radius, 8px);
+  padding: var(--am-fluid-space-lg);
+  container-type: inline-size;
+}
+.am-card--quiet {
+  background: var(--am-base-2);
+  border-color: var(--am-border);
+}
+.am-card--accent {
+  border-color: var(--am-accent);
+  box-shadow: 0 0 0 1px var(--am-accent-tint);
+}
+.am-card--danger {
+  border-color: var(--am-danger);
+  box-shadow: 0 0 0 1px var(--am-danger-tint);
+}
+
+/* ── container queries on cards ────────────────────────────────
+   Inside any .am-card, a child grid collapses when the card is
+   narrow regardless of the viewport. This is the whole reason we
+   pay for container-type above.
+   ────────────────────────────────────────────────────────────── */
+@container (max-width: 32rem) {
+  .am-card .am-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* ── content centerline ───────────────────────────────────────
+   Pages that want a centred reading column add .am-content. */
+.am-content        { max-width: var(--am-content); margin-inline: auto; padding-inline: var(--am-fluid-space-md); }
+.am-content--narrow{ max-width: var(--am-content-narrow); }
+.am-content--wide  { max-width: var(--am-content-wide); }
+
+/* ── motion: respect prefers-reduced-motion ─────────────────── */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}

@@ -1,0 +1,329 @@
+---
+/**
+ * MaskedInput — text input with reveal toggle and copy-to-clipboard.
+ *
+ * Starts masked by default. Eye-icon click reveals for 5 s then re-masks.
+ * Copy button writes to clipboard via navigator.clipboard.writeText and
+ * calls window.dashToast for feedback (Toast.astro must be present in the
+ * shell, which it always is in DashShell/AuthShell/AppShell).
+ *
+ * Props:
+ *   id          — field ID (also used as name)
+ *   label       — visible label text
+ *   value       — current value
+ *   autocomplete — autocomplete attribute (default "off")
+ *   maxLength   — optional maxlength attribute
+ *   mask        — 'auto' (start masked, toggle on click) | 'always' (no reveal)
+ *   hint        — optional hint below the field
+ *   error       — optional error message (activates error state)
+ *   readOnly    — render as read-only display; no native <input>, just hidden input
+ */
+
+interface Props {
+  id: string;
+  label: string;
+  value: string;
+  autocomplete?: 'current-password' | 'new-password' | 'off';
+  maxLength?: number;
+  mask?: 'auto' | 'always';
+  hint?: string;
+  error?: string;
+  readOnly?: boolean;
+  /** Optional form field name override (defaults to id). */
+  name?: string;
+}
+
+const {
+  id,
+  label,
+  value,
+  autocomplete = 'off',
+  maxLength,
+  mask = 'auto',
+  hint,
+  error,
+  readOnly = false,
+  name,
+} = Astro.props;
+
+const fieldName = name ?? id;
+const hasError = !!error;
+---
+
+<div class="mi" id={`mi-wrap-${id}`} data-mask={mask} data-state={hasError ? 'error' : undefined}>
+  <div class="mi__label-row">
+    <label class="mi__label" for={id}>{label}</label>
+  </div>
+
+  <div class="mi__control">
+    {readOnly ? (
+      <>
+        <span class="mi__value" id={id} aria-label={label} data-reveal="false">
+          {'•'.repeat(Math.min(value.length || 12, 24))}
+        </span>
+        <input type="hidden" name={fieldName} value={value} />
+      </>
+    ) : (
+      <input
+        id={id}
+        name={fieldName}
+        type="password"
+        class="mi__input"
+        value={value}
+        autocomplete={autocomplete}
+        maxlength={maxLength}
+        data-reveal="false"
+        aria-describedby={hint || error ? `mi-desc-${id}` : undefined}
+      />
+    )}
+
+    {mask !== 'always' && (
+      <button
+        type="button"
+        class="mi__toggle"
+        aria-label="reveal value"
+        data-for={id}
+        aria-pressed="false"
+      >
+        <svg class="am-icon am-icon--sm" aria-hidden="true">
+          <use href="/agent-ui/icons/sprite.svg#eye"></use>
+        </svg>
+      </button>
+    )}
+
+    <button
+      type="button"
+      class="mi__copy"
+      aria-label="copy to clipboard"
+      data-for={id}
+      data-value={value}
+    >
+      <svg class="am-icon am-icon--sm" aria-hidden="true">
+        <use href="/agent-ui/icons/sprite.svg#copy"></use>
+      </svg>
+    </button>
+  </div>
+
+  {(error || hint) && (
+    <div
+      class:list={['mi__desc', error ? 'mi__desc--error' : 'mi__desc--hint']}
+      id={`mi-desc-${id}`}
+      role={error ? 'alert' : undefined}
+    >
+      {error ?? hint}
+    </div>
+  )}
+</div>
+
+<style>
+  .mi {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
+
+  .mi__label-row {
+    display: flex;
+    align-items: baseline;
+    gap: var(--am-s-2);
+  }
+
+  .mi__label {
+    font-family: var(--am-font-mono);
+    font-size: 11px;
+    letter-spacing: var(--am-tracking-wide);
+    text-transform: uppercase;
+    color: var(--am-muted);
+    font-weight: 700;
+  }
+
+  .mi__control {
+    display: flex;
+    align-items: center;
+    gap: 0;
+    border: 1px solid var(--am-border);
+    border-radius: var(--am-radius-sm);
+    background: var(--am-base-2);
+    transition: border-color var(--am-dur-fast) var(--am-ease);
+    overflow: hidden;
+  }
+
+  .mi[data-state="error"] .mi__control {
+    border-color: var(--am-danger);
+  }
+
+  .mi__control:focus-within {
+    border-color: var(--am-accent);
+  }
+
+  .mi[data-state="error"] .mi__control:focus-within {
+    border-color: var(--am-danger);
+    box-shadow: 0 0 0 3px color-mix(in srgb, var(--am-danger) 15%, transparent);
+  }
+
+  .mi__input {
+    flex: 1;
+    min-width: 0;
+    height: 34px;
+    padding: 0 10px;
+    background: transparent;
+    border: none;
+    outline: none;
+    color: var(--am-text);
+    font: inherit;
+    font-size: var(--am-fz-sm);
+    font-family: var(--am-font-mono);
+    letter-spacing: 0.08em; /* slightly spread masked dots */
+  }
+
+  .mi__value {
+    flex: 1;
+    padding: 0 10px;
+    font-family: var(--am-font-mono);
+    font-size: var(--am-fz-sm);
+    color: var(--am-text-2);
+    letter-spacing: 0.08em;
+    line-height: 34px;
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .mi__toggle,
+  .mi__copy {
+    flex-shrink: 0;
+    display: grid;
+    place-items: center;
+    width: 34px;
+    height: 34px;
+    background: transparent;
+    border: none;
+    border-left: 1px solid var(--am-border);
+    color: var(--am-muted);
+    cursor: pointer;
+    transition: color var(--am-dur-fast) var(--am-ease), background var(--am-dur-fast) var(--am-ease);
+  }
+
+  .mi__toggle:hover,
+  .mi__copy:hover {
+    color: var(--am-text);
+    background: var(--am-surface-2);
+  }
+
+  .mi__toggle[aria-pressed="true"] {
+    color: var(--am-accent);
+  }
+
+  .mi__copy[data-copied="true"] {
+    color: var(--am-accent);
+  }
+
+  .mi__desc {
+    font-size: var(--am-fz-xs);
+  }
+
+  .mi__desc--hint {
+    color: var(--am-muted);
+  }
+
+  .mi__desc--error {
+    color: var(--am-danger);
+  }
+</style>
+
+<script is:inline>
+(function () {
+  var REVEAL_TIMEOUT = 5000;
+
+  function initMi(wrap) {
+    if (wrap._miInit) return;
+    wrap._miInit = true;
+
+    var mask = wrap.dataset.mask || 'auto';
+    var toggleBtn = wrap.querySelector('.mi__toggle');
+    var copyBtn = wrap.querySelector('.mi__copy');
+    var input = wrap.querySelector('.mi__input');
+    var valueSpan = wrap.querySelector('.mi__value');
+    var revealTimer = null;
+
+    // ---- Reveal / mask ----
+    if (toggleBtn && mask === 'auto') {
+      toggleBtn.addEventListener('click', function () {
+        var revealed = toggleBtn.getAttribute('aria-pressed') === 'true';
+        if (revealed) {
+          maskIt();
+        } else {
+          revealIt();
+        }
+      });
+    }
+
+    function revealIt() {
+      if (input) input.type = 'text';
+      if (valueSpan && input) {
+        valueSpan.textContent = wrap.querySelector('input[type="hidden"]')?.value ?? '';
+      }
+      if (toggleBtn) {
+        toggleBtn.setAttribute('aria-pressed', 'true');
+        toggleBtn.setAttribute('aria-label', 'hide value');
+        var use = toggleBtn.querySelector('use');
+        if (use) use.setAttribute('href', '/agent-ui/icons/sprite.svg#eye-off');
+      }
+      clearTimeout(revealTimer);
+      revealTimer = setTimeout(maskIt, REVEAL_TIMEOUT);
+    }
+
+    function maskIt() {
+      if (input) input.type = 'password';
+      if (valueSpan) {
+        var hiddenInput = wrap.querySelector('input[type="hidden"]');
+        var len = hiddenInput ? hiddenInput.value.length : 12;
+        valueSpan.textContent = '•'.repeat(Math.min(len, 24));
+      }
+      if (toggleBtn) {
+        toggleBtn.setAttribute('aria-pressed', 'false');
+        toggleBtn.setAttribute('aria-label', 'reveal value');
+        var use = toggleBtn.querySelector('use');
+        if (use) use.setAttribute('href', '/agent-ui/icons/sprite.svg#eye');
+      }
+      clearTimeout(revealTimer);
+    }
+
+    // ---- Copy ----
+    if (copyBtn) {
+      copyBtn.addEventListener('click', async function () {
+        var v;
+        if (input) {
+          v = input.value;
+        } else {
+          // read-only: grab from hidden
+          var hi = wrap.querySelector('input[type="hidden"]');
+          v = hi ? hi.value : copyBtn.dataset.value || '';
+        }
+
+        try {
+          await navigator.clipboard.writeText(v);
+          copyBtn.dataset.copied = 'true';
+          var use = copyBtn.querySelector('use');
+          if (use) use.setAttribute('href', '/agent-ui/icons/sprite.svg#check');
+          if (window.dashToast) window.dashToast({ message: 'copied to clipboard', tone: 'ok', duration: 2000 });
+          setTimeout(function () {
+            copyBtn.dataset.copied = 'false';
+            if (use) use.setAttribute('href', '/agent-ui/icons/sprite.svg#copy');
+          }, 2000);
+        } catch (e) {
+          if (window.dashToast) window.dashToast({ message: 'clipboard not available', tone: 'warn', duration: 3000 });
+        }
+      });
+    }
+  }
+
+  function initAll() {
+    document.querySelectorAll('.mi').forEach(function (el) { initMi(el); });
+  }
+
+  initAll();
+  document.addEventListener('htmx:afterSwap', initAll);
+})();
+</script>

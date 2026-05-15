@@ -1,0 +1,255 @@
+---
+/**
+ * UserMenu — avatar circle + dropdown
+ *
+ * Shows the signed-in GitHub user's avatar (or iris-gradient initials fallback).
+ * Dropdown: GitHub username, email, divider, "View on GitHub", "Sign out".
+ *
+ * Closes on: click-outside, ESC, or route change.
+ * Uses a <details> for native toggle + ESC support, with JS for click-outside.
+ */
+
+interface Props {
+  /** GitHub username. Displayed as @username in dropdown. */
+  githubUser?: string;
+  /** GitHub email. Displayed muted below username. */
+  githubEmail?: string;
+  /** Avatar image URL. If absent, falls back to iris-gradient letter. */
+  githubAvatarUrl?: string;
+  /** Sign-out URL. Defaults to /oauth/signout. */
+  signOutHref?: string;
+}
+
+const {
+  githubUser,
+  githubEmail,
+  githubAvatarUrl,
+  signOutHref = '/oauth/signout',
+} = Astro.props;
+
+// Derive initials letter for fallback avatar
+const initial = githubUser ? githubUser.charAt(0).toUpperCase() : 'U';
+---
+
+<div class="dsh-user" id="dsh-user-menu">
+  <button
+    class="dsh-user__trigger"
+    aria-haspopup="menu"
+    aria-expanded="false"
+    aria-controls="dsh-user-dropdown"
+    id="dsh-user-trigger"
+  >
+    {githubAvatarUrl ? (
+      <img
+        class="dsh-user__avatar dsh-user__avatar--img"
+        src={githubAvatarUrl}
+        alt={githubUser ?? 'User avatar'}
+        width="28"
+        height="28"
+      />
+    ) : (
+      <span class="dsh-user__avatar" aria-hidden="true">{initial}</span>
+    )}
+    <svg class="am-icon am-icon--sm dsh-user__caret" aria-hidden="true">
+      <use href="/agent-ui/icons/sprite.svg#chevron-down"></use>
+    </svg>
+  </button>
+
+  <div
+    class="dsh-user__menu"
+    role="menu"
+    id="dsh-user-dropdown"
+    hidden
+  >
+    {githubUser && (
+      <div class="dsh-user__id">
+        <div class="dsh-user__id-name">{githubUser}</div>
+        {githubEmail && <div class="dsh-user__id-email">{githubEmail}</div>}
+      </div>
+    )}
+
+    <a class="dsh-user__action" role="menuitem" href={`https://github.com/${githubUser ?? ''}`}
+      target="_blank" rel="noopener noreferrer">
+      <svg class="am-icon am-icon--sm" aria-hidden="true">
+        <use href="/agent-ui/icons/sprite.svg#external-link"></use>
+      </svg>
+      View on GitHub
+    </a>
+
+    <a class="dsh-user__action" role="menuitem" href={`https://github.com/${githubUser ?? ''}`}
+      target="_blank" rel="noopener noreferrer">
+      <svg class="am-icon am-icon--sm" aria-hidden="true">
+        <use href="/agent-ui/icons/sprite.svg#settings"></use>
+      </svg>
+      Account preferences
+    </a>
+
+    <a class="dsh-user__action dsh-user__action--danger" role="menuitem" href={signOutHref}>
+      <svg class="am-icon am-icon--sm" aria-hidden="true">
+        <use href="/agent-ui/icons/sprite.svg#logout"></use>
+      </svg>
+      Sign out
+    </a>
+  </div>
+</div>
+
+<style>
+  .dsh-user {
+    position: relative;
+    display: inline-flex;
+  }
+
+  .dsh-user__trigger {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--am-s-2);
+    padding: 0 var(--am-s-1);
+    height: 36px;
+    background: transparent;
+    border: 1px solid transparent;
+    border-radius: var(--am-btn-radius);
+    cursor: pointer;
+    color: var(--am-text-2);
+    transition:
+      background var(--am-dur-fast) var(--am-ease),
+      border-color var(--am-dur-fast) var(--am-ease);
+  }
+
+  .dsh-user__trigger:hover,
+  .dsh-user__trigger[aria-expanded="true"] {
+    background: var(--am-surface);
+    border-color: var(--am-border);
+  }
+
+  .dsh-user__avatar {
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, var(--am-iris), var(--am-iris-d));
+    display: grid;
+    place-items: center;
+    font-family: var(--am-font-display);
+    font-weight: var(--am-fw-bold);
+    font-size: 12px;
+    color: var(--am-text);
+    border: 1px solid var(--am-border-2);
+    flex-shrink: 0;
+    text-transform: uppercase;
+  }
+
+  .dsh-user__avatar--img {
+    object-fit: cover;
+    background: var(--am-surface-2);
+  }
+
+  .dsh-user__caret {
+    color: var(--am-muted);
+  }
+
+  .dsh-user__menu {
+    position: absolute;
+    top: calc(100% + 8px);
+    right: 0;
+    min-width: 240px;
+    background: var(--am-surface);
+    border: 1px solid var(--am-border);
+    border-radius: var(--am-radius);
+    box-shadow: var(--am-shadow-pop);
+    padding: var(--am-s-2);
+    z-index: 50;
+  }
+
+  .dsh-user__menu[hidden] {
+    display: none;
+  }
+
+  .dsh-user__id {
+    padding: var(--am-s-3);
+    border-bottom: 1px solid var(--am-border);
+    margin-bottom: var(--am-s-1);
+  }
+
+  .dsh-user__id-name {
+    font-family: var(--am-font-mono);
+    font-size: var(--am-fz-sm);
+    color: var(--am-text);
+  }
+
+  .dsh-user__id-name::before {
+    content: '@';
+    color: var(--am-muted-2);
+  }
+
+  .dsh-user__id-email {
+    font-family: var(--am-font-mono);
+    font-size: var(--am-fz-xs);
+    color: var(--am-muted);
+    margin-top: 2px;
+  }
+
+  .dsh-user__action {
+    display: flex;
+    align-items: center;
+    gap: var(--am-s-2);
+    padding: var(--am-s-2) var(--am-s-3);
+    font-family: var(--am-font);
+    font-size: var(--am-fz-sm);
+    color: var(--am-text-2);
+    border-radius: var(--am-radius-sm);
+    text-decoration: none;
+    cursor: pointer;
+    transition: background var(--am-dur-fast) var(--am-ease), color var(--am-dur-fast) var(--am-ease);
+  }
+
+  .dsh-user__action:hover {
+    background: var(--am-surface-2);
+    color: var(--am-text);
+  }
+
+  .dsh-user__action--danger {
+    color: var(--am-danger);
+  }
+
+  .dsh-user__action--danger:hover {
+    background: var(--am-danger-tint);
+    color: var(--am-danger);
+  }
+</style>
+
+<script is:inline>
+  (function () {
+    const container = document.getElementById('dsh-user-menu');
+    const trigger   = document.getElementById('dsh-user-trigger');
+    const dropdown  = document.getElementById('dsh-user-dropdown');
+    if (!container || !trigger || !dropdown) return;
+
+    function openMenu() {
+      dropdown.hidden = false;
+      trigger.setAttribute('aria-expanded', 'true');
+      dropdown.querySelector('[role="menuitem"]')?.focus();
+    }
+
+    function closeMenu() {
+      dropdown.hidden = true;
+      trigger.setAttribute('aria-expanded', 'false');
+    }
+
+    trigger.addEventListener('click', (e) => {
+      e.stopPropagation();
+      dropdown.hidden ? openMenu() : closeMenu();
+    });
+
+    // Close on click-outside
+    document.addEventListener('click', (e) => {
+      if (!container.contains(e.target)) closeMenu();
+    });
+
+    // Close on ESC
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape' && !dropdown.hidden) {
+        closeMenu();
+        trigger.focus();
+      }
+    });
+  })();
+</script>

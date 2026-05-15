@@ -1,0 +1,86 @@
+---
+/**
+ * KeyValueList — <dl> with monospace muted keys and primary text values
+ *
+ * Supports 1-column (default) and 2-column layouts.
+ * Values can include an optional secondary em fragment (rendered muted).
+ *
+ * Consumers can pass `pairs` array for server-side rendering, OR use the
+ * default slot for rich values (e.g. ExpiryChip inside a <dd>).
+ */
+
+interface KVPair {
+  key: string;
+  /** Value as string. For rich values (chips, pills), use the slot instead. */
+  value: string;
+  /** Optional muted secondary fragment appended after value. */
+  sub?: string;
+}
+
+interface Props {
+  /** Key-value pairs for simple string values. */
+  pairs?: KVPair[];
+  /** Number of columns. 1 (default) or 2. */
+  columns?: 1 | 2;
+}
+
+const { pairs, columns = 1 } = Astro.props;
+---
+
+<dl class:list={['dsh-kvl', columns === 2 && 'dsh-kvl--cols2']}>
+  {pairs?.map(pair => (
+    <>
+      <dt>{pair.key}</dt>
+      <dd>
+        {pair.value}
+        {pair.sub && <em> · {pair.sub}</em>}
+      </dd>
+    </>
+  ))}
+  <!-- Slot: for rich content pairs (consumer provides <dt><dd> elements) -->
+  <slot />
+</dl>
+
+<style>
+  .dsh-kvl {
+    margin: 0;
+    display: grid;
+    grid-template-columns: minmax(140px, max-content) 1fr;
+    gap: 10px var(--am-s-4);
+    font-size: var(--am-fz-sm);
+  }
+
+  .dsh-kvl--cols2 {
+    grid-template-columns: minmax(140px, max-content) 1fr minmax(140px, max-content) 1fr;
+    gap: 10px var(--am-s-4);
+  }
+
+  .dsh-kvl > dt {
+    font-family: var(--am-font-mono);
+    font-size: 11px;
+    color: var(--am-muted);
+    letter-spacing: 0.02em;
+    align-self: center;
+  }
+
+  .dsh-kvl > dd {
+    margin: 0;
+    font-family: var(--am-font-mono);
+    font-size: 12px;
+    color: var(--am-text);
+    align-self: center;
+    word-break: break-all;
+  }
+
+  .dsh-kvl > dd em {
+    font-style: normal;
+    color: var(--am-muted);
+  }
+
+  /* Responsive: collapse to 1-col on narrow */
+  @media (max-width: 640px) {
+    .dsh-kvl--cols2 {
+      grid-template-columns: minmax(140px, max-content) 1fr;
+    }
+  }
+</style>

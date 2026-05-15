@@ -4,6 +4,8 @@
   "private": true,
   "description": "Apex marketing site for agenticmedia.cc — beta-invite capture for commons",
   "scripts": {
+    "prebuild": "mkdir -p public/ui/styles && cp src/lib/control-center-ui/styles/shell.css public/ui/styles/shell.css",
+    "predev": "mkdir -p public/ui/styles && cp src/lib/control-center-ui/styles/shell.css public/ui/styles/shell.css",
     "dev": "astro dev",
     "build": "astro build",
     "preview": "astro preview",
